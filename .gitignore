@@ -1,10 +1,1 @@
-Makefile
-config.h
-config.log
-config.status
-lib/.deps/
-lib/Makefile
-libtool
-stamp-h1
-tests/.deps/
-tests/Makefile
+.git
