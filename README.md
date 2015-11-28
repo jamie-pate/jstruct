@@ -55,10 +55,21 @@ struct my_json_container container={
 }
 ```
 
-# Usage
+# Build and Install
 
-git clone *repo*
-libtoolize
-autoreconf --install [-I /usr/local/share/aclocal]
-./configure
-make && sudo make install
+## From git
+
+ * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf)
+ * git clone *repo*
+ * `libtoolize`
+ * `autoreconf --install [-I /usr/local/share/aclocal]` (check.m4 may be installed somewhere that autoreconf can't find it)
+ * `./configure`
+ * `make && sudo make install`
+
+## From release tarball
+
+(Coming soon)
+
+ * `tar -zxf jstruct.tar.gz`
+ * `cd jstruct`
+ * `./ configure && make && sudo make install`
