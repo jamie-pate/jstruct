@@ -6,7 +6,7 @@ The jstruct preprocessor generates C code that transforms data between C structu
 It reads annotated comments from the structure declarations in your header,
 and creates custom macros and functions that efficiently and automatically do your dirty work.
 
-# sample
+# Sample
 
 ```
 //main.h
@@ -54,3 +54,11 @@ struct my_json_container container={
   jstruct_init_malloc(.alloc_array_data, my_json_data, 2)
 }
 ```
+
+# Usage
+
+git clone *repo*
+libtoolize
+autoreconf --install [-I /usr/local/share/aclocal]
+./configure
+make && sudo make install
