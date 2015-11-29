@@ -68,7 +68,9 @@ int main() {
 
 ## From git
 
- * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf)
+ Required Packages: `autoconf`,`libtool`,`libjson-c-dev`
+
+ * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf) or `svn checkout svn://svn.code.sf.net/p/check/code/trunk check-code && cd check-code` and follow the instructions in `README`
  * git clone *repo*
  * `libtoolize`
  * `autoreconf --install [-I /usr/local/share/aclocal]` (check.m4 may be installed somewhere that autoreconf can't find it)
