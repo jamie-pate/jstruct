@@ -2,12 +2,17 @@
 #define BASIC_H
 // Generated automatically by libjstruct. Do not modify.
 
+#include <stddef.h>
 #include <jstruct.h>
-#include <json_object.h>
+#include <json-c/json_object.h>
+
+// jstruct_type enum is generated and placed in [prefix_]jstruct_types.h
+#include "basic_jstruct_types.h"
 
 //@json
 struct my_json_data {
-    int id;
+    // @comment Unique id (process scope)
+    long long id;
 
     /* don't include in json */
     //@private
@@ -24,35 +29,35 @@ struct my_json_data {
     /* GENERATED MEMBERS */
     bool ratio__null__;
     int tags__length__;
-}
+};
 
 struct jstruct_object_property my_json_data__jstruct_properties__[] = {
     {
         .name="id",
         .type={json_type_int},
-        .offset=OFFSETOF(my_json_data, id),
+        .offset=offsetof(struct my_json_data, id),
     },
     {
         .name="ratio",
         .type={json_type_double},
-        .offset=OFFSETOF(my_json_data, ratio),
+        .offset=offsetof(struct my_json_data, ratio),
         .nullable=true,
     },
     {
         .name="name",
         .type={json_type_string},
-        .offset=OFFSETOF(my_json_data, name),
+        .offset=offsetof(struct my_json_data, name),
     },
     {
         .name="tags",
-        .offset=OFFSETOF(my_json_data, tags),
+        .offset=offsetof(struct my_json_data, tags),
         .type={
             .json=json_type_array,
             .member=json_type_string,
         },
-    }
+    },
     { NULL }
-}
+};
 
 //@json
 struct my_json_container {
@@ -64,7 +69,7 @@ struct my_json_container {
     /* pointer arrays need to be annotated */
     //@array
     struct my_json_data *alloc_array_data;
-}
+};
 
 struct jstruct_object_property my_json_container__jstruct_properties__[] = {
     {
@@ -73,7 +78,7 @@ struct jstruct_object_property my_json_container__jstruct_properties__[] = {
             .json=json_type_object,
             .jstruct=jstruct_type__my_json_data__,
         },
-        .offset=OFFSETOF(my_json_container, main_data),
+        .offset=offsetof(struct my_json_container, main_data),
     },
     {
         .name="array_data",
@@ -82,18 +87,18 @@ struct jstruct_object_property my_json_container__jstruct_properties__[] = {
             .member=json_type_object,
             .jstruct=jstruct_type__my_json_data__,
         },
-        .offset=OFFSETOF(my_json_container, array_data),
+        .offset=offsetof(struct my_json_container, array_data),
         .length=5,
     },
     {
         .name="alloc_array_data",
         .type={
             .json=json_type_array,
-            .member=json_type_object
+            .member=json_type_object,
             .jstruct=jstruct_type__my_json_data__,
-        }
-        .offset=OFFSETOF(my_json_container, alloc_array_data),
+        },
+        .offset=offsetof(struct my_json_container, alloc_array_data),
     }
-}
+};
 
 #endif

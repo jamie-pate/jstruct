@@ -9,18 +9,22 @@ and creates custom macros and functions that efficiently and automatically do yo
 # Sample
 
 ```
-//main_jstruct.hstruct -> main_jstruct.h
+//main_jstruct.hstruct (converted to main_jstruct.h)
 //@json
 struct my_json_data {
-  int id;
+  long long id;
+
   /* don't include in json */
   //@private
   int _id;
+
   /* add the ability to null this field even though it's not a pointer */
   //@nullable
   double ratio;
   char *name;
-  //@array /*TODO: (necessary?)*/
+
+  /*TODO: (is @array necessary?)*/
+  //@array
   char **tags;
 }
 
@@ -39,23 +43,24 @@ struct my_json_container {
 #include "json_object.h"
 
 int main() {
+    char *data_tags[] = {"main", "data", "sample"};
     struct my_json_container container={
         .main_data={
             .id=1,
             ._id=2,
             .ratio=3.5,
             .name="main_data",
-            .tags={"main", "data", "sample"}
+            .tags=data_tags
         },
         .array_data={
             {
                 .id=3,
                 .ratio__null__=true
             },{.id=5},{.id=6}
-        },
-        /* inline malloc macro? */
-        jstruct_init_malloc(.alloc_array_data, my_json_data, 2)
-    }
+        }
+    }       
+    /* malloc macro (automatically sets container.array_data__length__ = 2) */
+    jstruct_init_malloc(container, .array_data, struct my_json_data, 2)
 
     struct json_object *obj = jstruct_export(&container, my_json_container);
     if (obj) {
@@ -73,13 +78,13 @@ int main() {
  * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf) or `svn checkout svn://svn.code.sf.net/p/check/code/trunk check-code && cd check-code` and follow the instructions in `README`
  * git clone *repo*
  * `libtoolize`
- * `autoreconf --install [-I /usr/local/share/aclocal]` (check.m4 may be installed somewhere that autoreconf can't find it)
+ * `autoreconf --install`
  * `./configure`
  * `make && sudo make install`
 
 ## From release tarball
 
-Requires libjson-c ?
+Requires libjson-c
 
 (Coming soon)
 
