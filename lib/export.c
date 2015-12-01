@@ -86,8 +86,12 @@ struct json_object *_jstruct_export(const void *data,
 
     _init_constructors();
     struct jstruct_object_property *property;
+    struct json_object *obj;
+    struct json_object *obj_prop;
+    obj = json_object_new_object();
     for (property = properties; property->name; ++property) {
-        constructors[json_type_index(property->type.json)](data, property);
+        obj_prop = constructors[json_type_index(property->type.json)](data, property);
+        json_object_object_add(obj, property->name, obj_prop);
     }
-
+    return obj;
 }
