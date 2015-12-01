@@ -3,7 +3,7 @@
 
 //@json
 struct my_json_data {
-  int id;
+  int64_t id;
 
   /* don't include in json */
   //@private

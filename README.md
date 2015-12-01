@@ -12,7 +12,7 @@ and creates custom macros and functions that efficiently and automatically do yo
 //main_jstruct.hstruct (converted to main_jstruct.h)
 //@json
 struct my_json_data {
-  long long id;
+  int64_t id;
 
   /* don't include in json */
   //@private
