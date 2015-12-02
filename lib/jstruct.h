@@ -1,15 +1,17 @@
 #ifndef LIBJSTRUCT_JSTRUCT_H
 #define LIBJSTRUCT_JSTRUCT_H
 
-#include <json-c/json_object.h>
-#include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <json-c/json_object.h>
 
 typedef enum jstruct_extra_type {
     jstruct_extra_type_none = 0,
-    jstruct_extra_type_uint,
-    jstruct_extra_type_int64,
-    jstruct_extra_type_uint64,
+    jstruct_extra_type_uint32_t,
+    jstruct_extra_type_int64_t,
+    jstruct_extra_type_uint64_t,
     jstruct_extra_type_float,
     jstruct_extra_type_end
 } jstruct_extra_type;
@@ -28,8 +30,16 @@ struct jstruct_object_property {
     } type;
     unsigned int offset;
     bool nullable;
+
+    // Array stuff
     // non-zero for a static array size.
     unsigned int length;
+    // offset of __length__ member for this property in generated struct
+    unsigned int length_offset;
+    // distance between array elements (in bytes)
+    unsigned int stride;
+    // true to dereference members before constructing json (char ** -> char *)
+    bool dereference;
 };
 
 // public headers

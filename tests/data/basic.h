@@ -36,7 +36,7 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
         .name="id",
         .type={
             .json=json_type_int,
-            .extra=jstruct_extra_type_uint64,
+            .extra=jstruct_extra_type_uint64_t,
         },
         .offset=offsetof(struct my_json_data, id),
     },
@@ -58,6 +58,9 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
             .json=json_type_array,
             .member=json_type_string,
         },
+        .length_offset=offsetof(struct my_json_data, tags__length__),
+        .stride=sizeof(char *),
+        .dereference=true
     },
     { NULL }
 };

@@ -16,6 +16,7 @@ START_TEST(export_basic_data) {
         .ratio=3.5,
         .name="main_data",
         .tags=data_tags,
+        .tags__length__=3,
     };
     struct json_object *obj = jstruct_export(&data, my_json_data);
     fprintf(stdout, "JSON OUTPUT: %s\n", json_object_to_json_string(obj));
@@ -34,9 +35,9 @@ START_TEST(export_basic_data) {
 
     ck_assert(json_object_object_get_ex(obj, "tags", &prop) == true);
     ck_assert_int_eq(json_object_array_length(prop), 3);
-    ck_assert_str_eq(json_object_array_get_idx(prop, 0), "main");
-    ck_assert_str_eq(json_object_array_get_idx(prop, 1), "data");
-    ck_assert_str_eq(json_object_array_get_idx(prop, 2), "sample");
+    ck_assert_str_eq(json_object_get_string(json_object_array_get_idx(prop, 0)), "main");
+    ck_assert_str_eq(json_object_get_string(json_object_array_get_idx(prop, 1)), "data");
+    ck_assert_str_eq(json_object_get_string(json_object_array_get_idx(prop, 2)), "sample");
 
 } END_TEST
 
