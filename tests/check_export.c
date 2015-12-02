@@ -6,10 +6,12 @@
 #include "../lib/export.h"
 #include "data/basic.h"
 
+#define BIG_INT64 0xFFFFFFFFF
+
 START_TEST(export_basic_data) {
     char *data_tags[] = {"main", "data", "sample"};
     struct my_json_data data = {
-        .id=-1,
+        .id=BIG_INT64,
         ._id=2,
         .ratio=3.5,
         .name="main_data",
@@ -21,7 +23,7 @@ START_TEST(export_basic_data) {
     struct json_object *prop;
     ck_assert_ptr_ne(obj, NULL);
     ck_assert(json_object_object_get_ex(obj, "id", &prop) == true);
-    ck_assert_int_eq(json_object_get_int64(prop), -1);
+    ck_assert_int_eq(json_object_get_int64(prop), BIG_INT64);
     ck_assert(json_object_object_get_ex(obj, "_id", &prop) == false);
 
     ck_assert(json_object_object_get_ex(obj, "ratio", &prop) == true);
