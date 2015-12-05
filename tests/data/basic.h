@@ -39,6 +39,7 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
             .extra=jstruct_extra_type_uint64_t,
         },
         .offset=offsetof(struct my_json_data, id),
+        .schema="{\n        \"title\": \"ID\",\n        \"description\": \"unique object id\",\n     \"type\": \"int\"\n    }",
     },
     {
         .name="ratio",

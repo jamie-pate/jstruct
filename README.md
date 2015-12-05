@@ -12,30 +12,37 @@ and creates custom macros and functions that efficiently and automatically do yo
 //main_jstruct.hstruct (converted to main_jstruct.h)
 //@json
 struct my_json_data {
-  int64_t id;
+    /*
+    @schema {
+        "title": "ID",
+        "description": "unique object id",
+        "type": "int"
+    }
+    */
+    int64_t id;
 
-  /* don't include in json */
-  //@private
-  int _id;
+    /* don't include in json */
+    //@private
+    int _id;
 
-  /* add the ability to null this field even though it's not a pointer */
-  //@nullable
-  double ratio;
-  char *name;
+    /* add the ability to null this field even though it's not a pointer */
+    //@nullable
+    double ratio;
+    char *name;
 
-  /*TODO: (is @array necessary?)*/
-  //@array
-  char **tags;
+    /*TODO: (is @array necessary?)*/
+    //@array
+    char **tags;
 }
 
 //@json
 struct my_json_container {
-  struct my_json_data main_data;
-  /* static arrays are automatic */
-  struct my_json_data array_data[5];
-  /* pointer arrays need to be annotated */
-  //@array
-  struct my_json_data *alloc_array_data;
+    struct my_json_data main_data;
+    /* static arrays are automatic */
+    struct my_json_data array_data[5];
+    /* pointer arrays need to be annotated */
+    //@array
+    struct my_json_data *alloc_array_data;
 }
 
 //main.c
@@ -58,7 +65,7 @@ int main() {
                 .ratio__null__=true
             },{.id=5},{.id=6}
         }
-    }       
+    }
     /* malloc macro (automatically sets container.array_data__length__ = 2) */
     jstruct_init_malloc(container, .array_data, struct my_json_data, 2)
 
@@ -73,7 +80,7 @@ int main() {
 
 ## From git
 
- Required Packages: `autoconf`,`libtool`,`libjson-c-dev`
+ Required Packages: `autoconf`,`libtool`,`libjson-c-dev`, `python-pycparser`
 
  * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf) or `svn checkout svn://svn.code.sf.net/p/check/code/trunk check-code && cd check-code` and follow the instructions in `README`
  * git clone *repo*
