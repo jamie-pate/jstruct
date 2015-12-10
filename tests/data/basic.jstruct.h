@@ -21,6 +21,7 @@ struct my_json_data {
     /* add the ability to null this field even though it's not a pointer */
     //@nullable
     double ratio;
+    //@name other_name
     char *name;
 
     /*TODO: (necessary?)*/

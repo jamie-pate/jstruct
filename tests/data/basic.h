@@ -1,6 +1,6 @@
 #ifndef BASIC_H
 #define BASIC_H
-// Generated automatically by libjstruct. Do not modify.
+// Generated automatically by libjstruct. Do Not Modify.
 
 #include <stddef.h>
 #include <jstruct.h>
@@ -32,7 +32,7 @@ struct my_json_data {
 };
 
 struct jstruct_object_property my_json_data__jstruct_properties__[] = {
-    {
+    {''
         .name="id",
         .type={
             .json=json_type_int,
@@ -48,7 +48,7 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
         .nullable=true,
     },
     {
-        .name="name",
+        .name="other_name",
         .type={json_type_string},
         .offset=offsetof(struct my_json_data, name),
     },

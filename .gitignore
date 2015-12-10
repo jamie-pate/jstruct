@@ -32,6 +32,7 @@
 **/*.lo
 **/*.la
 **/*.lai
+**/*.pyc
 tests/check_jstruct
 tests/*.log
 tests/check_jstruct.trs
