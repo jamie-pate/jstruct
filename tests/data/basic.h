@@ -2,9 +2,10 @@
 #define BASIC_H
 // Generated automatically by libjstruct. Do Not Modify.
 
-#include <stddef.h>
 #include <jstruct.h>
 #include <json-c/json_object.h>
+
+#include <stddef.h>
 
 // jstruct_type enum is generated and placed in [prefix_]jstruct_types.h
 #include "basic_jstruct_types.h"
@@ -17,6 +18,8 @@ struct my_json_data {
     /* don't include in json */
     //@private
     int _id;
+
+    bool active;
 
     /* add the ability to null this field even though it's not a pointer */
     //@nullable
@@ -32,7 +35,7 @@ struct my_json_data {
 };
 
 struct jstruct_object_property my_json_data__jstruct_properties__[] = {
-    {''
+    {
         .name="id",
         .type={
             .json=json_type_int,
@@ -42,14 +45,25 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
         .schema="{\n        \"title\": \"ID\",\n        \"description\": \"unique object id\",\n     \"type\": \"int\"\n    }",
     },
     {
+        .name="active",
+        .type={
+            .json=json_type_bool,
+        },
+        .offset=offsetof(struct my_json_data, active),
+    },
+    {
         .name="ratio",
-        .type={json_type_double},
+        .type={
+            .json=json_type_double
+        },
         .offset=offsetof(struct my_json_data, ratio),
         .nullable=true,
     },
     {
         .name="other_name",
-        .type={json_type_string},
+        .type={
+            .json=json_type_string
+        },
         .offset=offsetof(struct my_json_data, name),
     },
     {

@@ -2,6 +2,7 @@
 #define BASIC_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 //@json
 struct my_json_data {
@@ -17,6 +18,8 @@ struct my_json_data {
     /* don't include in json */
     //@private
     int _id;
+
+    bool active;
 
     /* add the ability to null this field even though it's not a pointer */
     //@nullable
