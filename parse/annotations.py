@@ -397,17 +397,17 @@ class Annotations():
             # match newlines (so we can count them)
             r'(?P<nl>\n)|' +
             # match preprocessor statements
-            r'((?!^|\n)#(?P<ppname>define|ifn?def|endif|include)' +
+            r'((?:^|(?!\n))#(?P<ppname>define|ifn?def|endif|include)' +
             # match preprocessor statement contents including line continuations
-            r'(?:\s+(?P<ppcontent>.*?(?:\\\n.*?)*))?(?=\n|$))|' +
+            r'(?:\s+(?P<ppcontent>.*?(?:\\\n.*?)*))?(?=\n|$|//|/\*))|' +
             # match oneline comments
-            r'//[\n\s]*@(?P<olname>' + ANNOTATION_NAME + r')|' +
+            r'(?://\s*@(?P<olname>' + ANNOTATION_NAME + r') *' +
             # oneline annotation content
-            r'(?P<olcontent>.*)' +
+            r'(?P<olcontent>.*)?)|' +
             # match the entire multiline comment for line counting purposes
-            r'/\*(?P<mlwhole>(?:[\n\s])*?@' +
+            r'/\*(?P<mlwhole>(?:\s)*?@' +
             # match annotation name
-            r'(?P<mlname>' + ANNOTATION_NAME + r')[\s\n]*' +
+            r'(?P<mlname>' + ANNOTATION_NAME + r')\s*' +
             # match everything after the @annotation in the comment
             r'(?P<mlcontent>(?:\n|.)*?)'+
             # end of multiline comment and non-capturing group
@@ -431,22 +431,26 @@ class Annotations():
                 name = '#'
             else:
                 name = olname or mlname
-            #content = match.group('ppcontent') or match.group('mlwhole')
-            content = match.group('mlwhole')
-            linecount = content.count('\n') if content else 0
+
+            wholecontent = match.group('ppcontent') or match.group('mlwhole')
+            linecount = wholecontent.count('\n') if wholecontent else 0
 
             if match.group('nl'):
                 line = line + 1
             elif name:
-                if not ppname:
+                if ppname:
+                    content = match.group('ppcontent')
+                else:
                     content = match.group('olcontent') if olname else match.group('mlcontent')
-                annotations.append({
+                annotation = {
                     'line': line,
                     'lineEnd': line + linecount,
                     'name': name,
                     'content': content,
-                    'directive': ppname
-                })
+                }
+                if ppname is not None:
+                    annotation['directive'] = ppname
+                annotations.append(annotation)
             else:
                 break
 
