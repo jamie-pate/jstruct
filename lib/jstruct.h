@@ -20,6 +20,8 @@ struct jstruct_object_property {
     char *name;
     // Useful for exporting eg: a self documenting REST api
     char *comment;
+    // json-schema
+    char *schema;
     struct type_t {
         json_type json;
         // if the c type doesn't exactly match the json type, it's covered here.

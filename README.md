@@ -98,3 +98,11 @@ Requires libjson-c
  * `tar -zxf jstruct.tar.gz`
  * `cd jstruct`
  * `./ configure && make && sudo make install`
+
+# Tests
+
+## C `check` Tests
+`make check` - checks the functionality of the runtime library
+
+## Python `unittest2` Tests
+`python -m unittest2` - checks the functionality of the jstruct annotation parser

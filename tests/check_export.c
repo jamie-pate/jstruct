@@ -14,6 +14,7 @@ START_TEST(export_basic_data) {
         .id=BIG_INT64,
         ._id=2,
         .ratio=3.5,
+        .active=true,
         .name="main_data",
         .tags=data_tags,
         .tags__length__=3,
@@ -30,7 +31,10 @@ START_TEST(export_basic_data) {
     ck_assert(json_object_object_get_ex(obj, "ratio", &prop) == true);
     ck_assert(json_object_get_double(prop) == 3.5);
 
-    ck_assert(json_object_object_get_ex(obj, "name", &prop) == true);
+    ck_assert(json_object_object_get_ex(obj, "active", &prop) == true);
+    ck_assert(json_object_get_boolean(prop) == true);
+
+    ck_assert(json_object_object_get_ex(obj, "other_name", &prop) == true);
     ck_assert_str_eq(json_object_get_string(prop), "main_data");
 
     ck_assert(json_object_object_get_ex(obj, "tags", &prop) == true);

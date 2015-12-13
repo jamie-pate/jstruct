@@ -47,7 +47,7 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
     {
         .name="active",
         .type={
-            .json=json_type_bool,
+            .json=json_type_boolean,
         },
         .offset=offsetof(struct my_json_data, active),
     },
