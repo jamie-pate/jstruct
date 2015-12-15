@@ -1,11 +1,50 @@
 import unittest2
 
+def td(dir):
+    """
+    join dir with test directory (wherever this script lives)
+    """
+    import os
+    from inspect import currentframe, getframeinfo
+    fi = getframeinfo(currentframe())
+    return os.path.join(os.path.dirname(fi.filename), dir)
+
+
 class TestParseJStruct(unittest2.TestCase):
     def setUp(self):
-        with open('tests/data/basic.h', 'r') as infile:
+        with open(td('data/basic.h'), 'r') as infile:
             self.basic_h = infile.read()
-        with open('tests/data/basic.jstruct.h', 'r') as infile:
+        with open(td('data/basic.jstruct.h'), 'r') as infile:
             self.basic_jstruct_h = infile.read()
+
+    def test_nest_named_initializer(self):
+        from pycparser import c_parser
+        from parse.jstruct_generator import CGenerator
+        source = '''struct test
+            {
+                int i;
+                struct test_i_t
+                {
+                    int k;
+                } test_i;
+                int j;
+            };
+            struct test test_var = {.i = 0, .test_i = {.k = 1}, .j = 2};
+        '''.replace('    ', '')
+        ast = c_parser.CParser().parse(source)
+
+        source2 = CGenerator().visit(ast).replace('  ', '')
+        self.assertEqual(source2, source)
+
+    def test_top_level_id_hack(self):
+        from pycparser import c_parser, c_ast
+        from parse.jstruct_generator import CGenerator
+        source = 'int i;\n'
+        ast = c_parser.CParser().parse(source)
+        ast.ext.append(c_ast.ID('#define unobtanium'))
+        source2 = CGenerator().visit(ast)
+        source = source + '#define unobtanium\n'
+        self.assertEqual(source2, source)
 
     def test_annotations(self):
         from parse.annotations import Annotations
@@ -28,13 +67,14 @@ class TestParseJStruct(unittest2.TestCase):
         print(repr(annotations.annotations))
         self.assertEqual(annotations.annotations, expected)
 
+
     def test_parser(self):
         import parse
         from parse.jstruct_parse import parse_and_generate
 
         generated = parse_and_generate(
-            'tests/data/basic.jstruct.h',
+            td('data/basic.jstruct.h'),
             None,
-            ['lib', 'tests/fake_libc_include']
+            [td('../lib'), td('fake_libc_include')]
         )
         self.assertEqual(generated, self.basic_h)
