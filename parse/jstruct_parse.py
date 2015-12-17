@@ -1,11 +1,17 @@
 from annotations import Annotations
+from jstruct_generator import CGenerator
 from preprocess import preprocess
-from pycparser import c_parser, c_generator, c_ast
+from pycparser import c_parser, c_ast
 import re
 
 
 GENERATED = '// Generated automatically by libjstruct. Do Not Modify.\n\n'
-PREPEND_HEADERS = '#include <jstruct.h>\n#include <json-c/json_object.h>\n\n'
+# these prepended headers get parsed, then output.
+# TODO: figure out how to add a comment after?
+PREPEND_HEADERS = '#include <jstruct.h>\n#include <json-c/json_object.h>\n'
+# TODO: custom prefix?
+LOCAL_JSTRUCT_TYPES = '#include "generated_jstruct_types.h"\n'
+GUARD_HEADERS_EXPR = r'^\s*#ifndef\s+[A-Z_]+\s+#define\s+[A-Z_]+\s*\n'
 
 def parse_jstruct(filename, include_paths=[]):
     parser = c_parser.CParser()
@@ -14,7 +20,7 @@ def parse_jstruct(filename, include_paths=[]):
 
     # insert some header includes and a 'do not modify'
     text = re.sub(
-        r'^[\s\n]*#ifndef\s+[A-Z_]+[\s\n]+#define\s+[A-Z_]+\s*\n',
+        GUARD_HEADERS_EXPR,
         r'\g<0>' + GENERATED + PREPEND_HEADERS,
         text, count=1, flags=re.IGNORECASE
     )
@@ -27,31 +33,8 @@ def parse_jstruct(filename, include_paths=[]):
         raise Exception('C Preprocessor error:' + err)
 
     ast = parser.parse(pptext, filename=filename)
-    generator = c_generator.CGenerator()
 
-    return (ast, generator, text)
-
-
-def generate(ast, generator, annotations):
-    decls = [d for d in ast.ext if isinstance(d.type, c_ast.Struct)]
-
-    print('****DECLARATIONS****')
-    lastline = 0
-    from itertools import chain
-    for struct in decls:
-        line = struct.type.coord.line
-
-        for a in annotations.get(line):
-            print('@' + repr(a))
-
-        print('%s: %s %s' % (line, struct.type.__class__.__name__, struct.type.name))
-        for decl in struct.type.decls:
-            line = decl.type.coord.line
-
-            for a in annotations.get(line):
-                print('@@' + repr(a))
-            print(line)
-            decl.show()
+    return (ast, text)
 
 
 def prune_ast(ast, filename):
@@ -64,24 +47,24 @@ def prune_ast(ast, filename):
 def parse_and_generate(filename, outfilename=None, include_paths=[]):
     from os import path
 
-    ast, generator, text = parse_jstruct(filename, include_paths=include_paths)
+    ast, text = parse_jstruct(filename, include_paths=include_paths)
     annotations = Annotations(text)
 
     annotations.expand(ast, '<stdin>')
     prune_ast(ast, '<stdin>')
 
+    generator = CGenerator()
     result = generator.visit(ast)
+
+    result = re.sub(
+        GUARD_HEADERS_EXPR,
+        r'\g<0>' + GENERATED + LOCAL_JSTRUCT_TYPES,
+        result, count=1, flags=re.IGNORECASE
+    )
+
 
     if outfilename:
         with open(outfilename, 'w') as outfile:
             outfile.write(result)
 
     return result
-
-if __name__ == '__main__':
-    import os
-    try:
-        os.mkdir('tests/data/.test')
-    except os.OSError:
-        pass
-    parse_and_generate('tests/data/basic.jstruct.h', 'tests/data/.test/basic.h')

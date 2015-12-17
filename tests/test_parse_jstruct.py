@@ -59,17 +59,16 @@ class TestParseJStruct(unittest2.TestCase):
             {'content': '', 'line': 19, 'lineEnd': 19, 'name': 'private'},
             {'content': '', 'line': 25, 'lineEnd': 25, 'name': 'nullable'},
             {'content': 'other_name', 'line': 27, 'lineEnd': 27, 'name': 'name'},
-            {'content': '', 'line': 31, 'lineEnd': 31, 'name': 'array'},
-            {'content': '', 'line': 35, 'lineEnd': 35, 'name': 'json'},
-            {'content': '', 'line': 43, 'lineEnd': 43, 'name': 'array'},
-            {'content': '', 'line': 47, 'lineEnd': 47, 'directive': 'endif', 'name': '#'}
+            {'content': '', 'line': 33, 'lineEnd': 33, 'name': 'json'},
+            {'content': '', 'line': 41, 'lineEnd': 41, 'name': 'array'},
+            {'content': '', 'line': 45, 'lineEnd': 45, 'directive': 'endif', 'name': '#'}
         ]
-        print(repr(annotations.annotations))
+        # print(repr(annotations.annotations))
         self.assertEqual(annotations.annotations, expected)
 
 
     def test_parser(self):
-        import parse
+        import parse, re
         from parse.jstruct_parse import parse_and_generate
 
         generated = parse_and_generate(
@@ -77,4 +76,7 @@ class TestParseJStruct(unittest2.TestCase):
             None,
             [td('../lib'), td('fake_libc_include')]
         )
-        self.assertEqual(generated, self.basic_h)
+        no_nl = re.compile(r'\s{2,}|(?<=[.;,{}])\s+(?=[.;,{}])|(?<=[={}])\s+|\s+(?=[{}=])')
+        basic_h_stripped = re.sub(r'\n', '', no_nl.sub('', self.basic_h))
+        gen_stripped = re.sub(r'\n', '', no_nl.sub('', generated))
+        self.assertEqual(gen_stripped, basic_h_stripped)

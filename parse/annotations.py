@@ -1,7 +1,20 @@
 import sys
 import StringIO
 import re
+import json
 from pycparser import c_ast
+from pycparser.plyparser import Coord
+from inspect import currentframe, getframeinfo
+
+
+def str_literal(str):
+    """
+    Escape a string into a c string literal
+    """
+    # using json.dumps for cheap escaping, it's not going to be perfect
+    # TODO: Probably should be improved
+    return json.dumps(str)
+
 
 def type_find(decl, ast_type):
     result = decl.type
@@ -13,6 +26,7 @@ def type_find(decl, ast_type):
             )
         result = result.type
     return result
+
 
 def idtype_or_struct_find(decl):
     """
@@ -40,11 +54,32 @@ class NodeList():
         self.idx = 0;
         self._list = list(other)
 
+    def seek(self, other):
+        """
+        Place the cursor directly after other in the list
+        Return True if other was found, False otherwise.
+        Only goes forward
+        """
+        i = max(0, self.idx - 1)
+        length = len(self._list)
+        while i < len:
+            if self._list[i] == other:
+                self.idx = i + 1
+                return True
+            i += 1
+        return False
+
     def insert(self, other):
+        """
+        Insert at the current cursor position.
+        """
         self._list.insert(self.idx, other)
         self.idx = self.idx + 1
 
     def splice(self, other):
+        """
+        insert many at the current cursor position
+        """
         for o in other:
             self.insert(o)
 
@@ -84,8 +119,12 @@ class ExpansionError(Exception):
 
 class Annotations():
 
+    # TODO: make these configurable?
     PROPERTIES_NAME = '{0}__jstruct_properties__'.format
+    JSON_TYPE_NAME = 'json_type_{0}'.format
     JSTRUCT_TYPE_NAME = 'jstruct_type__{0}__'.format
+    LENGTH_PROPERTY_NAME = '{0}__length__'.format
+    NULLABLE_PROPERTY_NAME = '{0}__null__'.format
     """
     Parse and apply annotations.
     """
@@ -105,7 +144,6 @@ class Annotations():
         line must be larger than any previous call,
         except after calling parse() or reset()
         """
-        print('GET ANNOTATIONS BEFORE: {0}'.format(line))
         a = True
         while a:
             a = self.get_next(line)
@@ -159,7 +197,7 @@ class Annotations():
         """
         # one-to-one json_types
         json_type_map = {
-            'bool': 'bool',
+            'bool': 'boolean',
             'int': 'int',
             'double': 'double',
             'char*': 'string'
@@ -174,31 +212,33 @@ class Annotations():
         }
 
         idtype, structtype, dereference = idtype_or_struct_find(decl)
+        is_array = False
 
         def try_get_types(dereference):
             if idtype:
-                ctype = ' '.join(idtype.names) + ('*' * dereference)
-                result = {}
-                try:
-                    result['json'] = json_type_map[ctype]
-                except KeyError:
+                while dereference > -1:
+                    ctype = ' '.join(idtype.names) + ('*' * dereference)
+                    result = {}
                     try:
-                        result['json'] = extra_type_map[ctype]
+                        result['json'] = Annotations.JSON_TYPE_NAME(json_type_map[ctype])
                     except KeyError:
-                        raise ExpansionError(
-                            type_annotations.get('array', None),
-                            decl,
-                            '\nUnable to map {0} to json type\n'.format(ctype)
-                        )
-                    result['extra'] = 'jstruct_extra_type_' + '_'.join(idtype.names)
+                        try:
+                            result['json'] = Annotations.JSON_TYPE_NAME(extra_type_map[ctype])
+                        except KeyError:
+                            raise ExpansionError(
+                                type_annotations.get('array', None),
+                                decl,
+                                '\nUnable to map {0} to json type\n'.format(ctype)
+                            )
+                        result['extra'] = 'jstruct_extra_type_' + '_'.join(idtype.names)
 
-                    if result['extra'] not in self._ast_info['jstruct_extra_type']:
-                        raise ExpansionError(
-                            None,
-                            decl,
-                            result['extra'] + ' is not defined'
-                        )
-                return result
+                        if result['extra'] not in self._ast_info['jstruct_extra_type']:
+                            raise ExpansionError(
+                                None,
+                                decl,
+                                result['extra'] + ' is not defined'
+                            )
+                    return result
             else:
                 jstruct_type = self.JSTRUCT_TYPE_NAME(structtype.name)
                 # struct type
@@ -224,21 +264,41 @@ class Annotations():
         initial_err = None
         while dereference >= 0:
             try:
-                return try_get_types(dereference)
+                types = try_get_types(dereference)
+                if is_array:
+                    types['member'] = types['json']
+                    types['json'] = 'json_type_array'
+                return types
             except ExpansionError as err:
-                dereference -= 1
-                print(err)
-                if initial_err is None:
-                    initial_err = err
+                # try again in case it's an array
+                if not is_array:
+                    dereference -= 1
+                    is_array = True
+                    if initial_err is None:
+                        initial_err = err
 
         raise initial_err
 
     def get_property_init_list(self, struct):
         """
         Create an InitList describing the property list for a struct
+        Also create a list of c_ast.Decl to append to the struct decls
         """
 
-        def make_prop_init_list(decl):
+        def make_extra_decl(name, t):
+            idtype = c_ast.IdentifierType([t])
+            td = c_ast.TypeDecl(name, [], idtype)
+            return c_ast.Decl(
+                name,
+                [], # quals
+                [], # storage
+                [], # funcspec
+                td, # type
+                None, # init
+                None, # bitsize
+            )
+
+        def make_prop_init_list(decl, extra_decls):
             """
             Create an InitList to instantiate a struct which describes a single property
             decl is the current property c_ast.Decl
@@ -267,11 +327,12 @@ class Annotations():
                         prop_name = name
                     if a['content'] == None:
                         raise ExpansionError(a, decl, 'Content is None')
-                    expr = c_ast.Constant('string', a['content'])
+                    expr = c_ast.Constant('string', str_literal(a['content']))
 
                 if name in ['nullable']:
                     init_name = c_ast.ID(name)
                     expr = c_ast.Constant('int', '1')
+                    extra_decls[Annotations.NULLABLE_PROPERTY_NAME(decl.name)] = 'bool'
 
                 if name in ['array']:
                     type_annotations[name] = a
@@ -288,34 +349,60 @@ class Annotations():
                 exprs.append(
                     c_ast.NamedInitializer(
                         [c_ast.ID('name')],
-                        c_ast.Constant('string', name)
+                        c_ast.Constant('string', str_literal(name))
                     )
                 )
 
             # assign types
-            types = [c_ast.NamedInitializer(
+            types = self.get_types(decl, type_annotations)
+            type_inits = [c_ast.NamedInitializer(
                 [c_ast.ID(ttype)],
                 c_ast.ID(t)
-            ) for ttype, t in self.get_types(decl, type_annotations).iteritems()]
+            ) for ttype, t in types.iteritems()]
+            fi = getframeinfo(currentframe())
             exprs.append(c_ast.NamedInitializer(
                 [c_ast.ID('type')],
-                c_ast.InitList(types)
+                c_ast.InitList(type_inits, Coord(fi.filename, fi.lineno))
             ))
             # calculate struct offset
             exprs.append(c_ast.NamedInitializer(
                 [c_ast.ID('offset')],
-                c_ast.FuncCall(c_ast.ID('offsetof'), c_ast.ExprList([
-                    c_ast.Typename(None, [],
-                        c_ast.TypeDecl(None, [],
-                            c_ast.Struct(struct.name, None))
-                    ),
-                    c_ast.ID(name)
-                ]))
+                self.offsetof(struct.name, name)
             ))
+            # calculate length offset
+            if types['json'] == 'json_type_array':
+                len_prop = Annotations.LENGTH_PROPERTY_NAME(name)
+                extra_decls[len_prop] = 'int'
+                exprs.append(c_ast.NamedInitializer(
+                    [c_ast.ID('length_offset')],
+                    self.offsetof(struct.name, len_prop)
+                ))
+                # TODO: STRIDE
+                # TODO: DEREFERENCE
+            fi = getframeinfo(currentframe())
+            return c_ast.InitList(exprs, Coord(fi.filename, fi.lineno))
 
-            return c_ast.InitList(exprs)
+        fi = getframeinfo(currentframe())
+        extra_decls = {}
+        exprs = (make_prop_init_list(p, extra_decls) for p in struct.decls)
+        initlist = c_ast.InitList(
+            [e for e in exprs if e is not None],
+            Coord(fi.filename, fi.lineno)
+        )
+        print(extra_decls)
+        extra_decls = [make_extra_decl(name, t) for name, t in extra_decls.iteritems()]
+        for d in extra_decls:
+            d.show()
+        return (initlist, extra_decls)
 
-        return c_ast.InitList([make_prop_init_list(p) for p in struct.decls])
+    def offsetof(self, struct_name, name):
+        return c_ast.FuncCall(c_ast.ID('offsetof'), c_ast.ExprList([
+            c_ast.Typename(None, [],
+                c_ast.TypeDecl(None, [],
+                    c_ast.Struct(struct_name, None))
+            ),
+            c_ast.ID(name)
+        ]))
 
     def expand(self, ast, filename):
         """
@@ -339,6 +426,7 @@ class Annotations():
 
             name = n.type.name
             struct = n.type
+            prop_init_list, struct_extra_decls = self.get_property_init_list(struct)
             properties = c_ast.Decl(
                 self.PROPERTIES_NAME(name),
                 [], #quals
@@ -354,10 +442,12 @@ class Annotations():
                     None, # dim
                     [] # dim_quals
                 ),
-                self.get_property_init_list(struct), # init
+                prop_init_list, # init
                 None # bitsize
             )
-            print(properties)
+            struct.decls.extend(struct_extra_decls)
+            if not ext.seek(n):
+                raise ExpansionError(a, n, "Couldn't seek to node")
             ext.insert(properties)
             return True
 

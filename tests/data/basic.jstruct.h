@@ -13,7 +13,7 @@ struct my_json_data {
         "type": "int"
     }
     */
-    int64_t id;
+    uint64_t id;
 
     /* don't include in json */
     //@private
@@ -27,8 +27,6 @@ struct my_json_data {
     //@name other_name
     char *name;
 
-    /*TODO: (necessary?)*/
-    //@array
     char **tags;
 };
 
