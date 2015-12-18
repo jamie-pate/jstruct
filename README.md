@@ -6,6 +6,11 @@ The jstruct preprocessor generates C code that transforms data between C structu
 It reads annotated comments from the structure declarations in your header,
 and creates custom macros and functions that efficiently and automatically do your dirty work.
 
+## Supported So Far
+
+ * Export structs containing primitive types and arrays to same. (char*, int, bool, uint64_t etc)
+ * Mechanical parsing of annotated header files to produce augmented struct declarations and data tables used by the export process.
+
 # Sample
 
 ```
@@ -19,29 +24,30 @@ struct my_json_data {
         "type": "int"
     }
     */
-    int64_t id;
+    uint64_t id;
 
     /* don't include in json */
     //@private
     int _id;
+
+    bool active;
 
     /* add the ability to null this field even though it's not a pointer */
     //@nullable
     double ratio;
     char *name;
 
-    /*TODO: (is @array necessary?)*/
-    //@array
+    /* automatically parsed as an array atm*/
     char **tags;
 }
 
 //@json
 struct my_json_container {
     struct my_json_data main_data;
+
     /* static arrays are automatic */
     struct my_json_data array_data[5];
-    /* pointer arrays need to be annotated */
-    //@array
+    /* as are struct arrays atm*/
     struct my_json_data *alloc_array_data;
 }
 
@@ -66,7 +72,7 @@ int main() {
             },{.id=5},{.id=6}
         }
     }
-    /* malloc macro (automatically sets container.array_data__length__ = 2) */
+    /* malloc macro (automatically sets container.array_data__length__ = 2) (TODO) */
     jstruct_init_malloc(container, .array_data, struct my_json_data, 2)
 
     struct json_object *obj = jstruct_export(&container, my_json_container);
@@ -102,7 +108,13 @@ Requires libjson-c
 # Tests
 
 ## C `check` Tests
-`make check` - checks the functionality of the runtime library
+
+Requires `check` http://check.sourceforge.net/web/install.html
+
+ * `make check` - checks the functionality of the runtime library
 
 ## Python `unittest2` Tests
-`python -m unittest2` - checks the functionality of the jstruct annotation parser
+
+Requires `python-unittest2` package
+
+ * `python -m unittest2` - checks the functionality of the jstruct annotation parser

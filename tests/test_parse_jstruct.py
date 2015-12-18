@@ -59,9 +59,8 @@ class TestParseJStruct(unittest2.TestCase):
             {'content': '', 'line': 19, 'lineEnd': 19, 'name': 'private'},
             {'content': '', 'line': 25, 'lineEnd': 25, 'name': 'nullable'},
             {'content': 'other_name', 'line': 27, 'lineEnd': 27, 'name': 'name'},
-            {'content': '', 'line': 33, 'lineEnd': 33, 'name': 'json'},
-            {'content': '', 'line': 41, 'lineEnd': 41, 'name': 'array'},
-            {'content': '', 'line': 45, 'lineEnd': 45, 'directive': 'endif', 'name': '#'}
+            {'content': '', 'line': 34, 'lineEnd': 34, 'name': 'json'},
+            {'content': '', 'line': 44, 'lineEnd': 44, 'directive': 'endif', 'name': '#'}
         ]
 
         self.assertEqual(annotations.annotations, expected)

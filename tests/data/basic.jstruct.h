@@ -27,6 +27,7 @@ struct my_json_data {
     //@name other_name
     char *name;
 
+    /* TODO: @dereference annotation in case this isn't an array? */
     char **tags;
 };
 
@@ -36,9 +37,7 @@ struct my_json_container {
 
     /* static arrays are automatic */
     struct my_json_data array_data[5];
-
-    /* pointer arrays need to be annotated */
-    //@array
+    /* TODO: @array shouldn't be automatic here */
     struct my_json_data *alloc_array_data;
 };
 
