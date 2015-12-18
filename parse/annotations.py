@@ -31,14 +31,18 @@ def type_find(decl, ast_type):
 def idtype_or_struct_find(decl):
     """
     Find the IdentifierType or Struct inside a Decl. Count PtrDecls as dereference.
-    Returns a tuple of (idtype, structtype, dereference)
+    arraydecl is an ArrayDecl is present
+    Returns a tuple of (idtype, structtype, arraydecl, dereference)
     """
     idtype = decl.type
     structtype = None
+    arraydecl = None
     dereference = 0
     while idtype and not isinstance(idtype, c_ast.IdentifierType):
         if isinstance(idtype, c_ast.PtrDecl):
             dereference = dereference + 1
+        if isinstance(idtype, c_ast.ArrayDecl):
+            arraydecl = idtype
         if isinstance(idtype, c_ast.Struct):
             structtype = idtype
             idtype = None
@@ -46,7 +50,7 @@ def idtype_or_struct_find(decl):
         if not hasattr(idtype, 'type'):
             raise ExpansionError(None, decl, 'Could not find IdentifierType or Struct')
         idtype = idtype.type
-    return idtype, structtype, dereference
+    return idtype, structtype, arraydecl, dereference
 
 
 class NodeList():
@@ -194,6 +198,7 @@ class Annotations():
             'extra': 'jstruct_extra_type_x',
             'jstruct': 'jstruct_type__x__'
         }
+        and an ArrayDecl if one was found
         """
         # one-to-one json_types
         json_type_map = {
@@ -211,13 +216,13 @@ class Annotations():
             'uint64_t': 'int',
         }
 
-        idtype, structtype, dereference = idtype_or_struct_find(decl)
-        is_array = False
+        idtype, structtype, arraydecl, dereference = idtype_or_struct_find(decl)
+        is_array = arraydecl is not None
 
-        def try_get_types(dereference):
+        def try_get_types(deref):
             if idtype:
-                while dereference > -1:
-                    ctype = ' '.join(idtype.names) + ('*' * dereference)
+                while deref > -1:
+                    ctype = ' '.join(idtype.names) + ('*' * deref)
                     result = {}
                     try:
                         result['json'] = Annotations.JSON_TYPE_NAME(json_type_map[ctype])
@@ -242,12 +247,14 @@ class Annotations():
             else:
                 jstruct_type = self.JSTRUCT_TYPE_NAME(structtype.name)
                 # struct type
-                if dereference == 0:
+                if arraydecl:
+                    deref += 1
+                if deref == 0:
                     return {
                         'json': 'json_type_object',
                         'jstruct': jstruct_type
                     }
-                elif dereference == 1:
+                elif deref == 1:
                     return {
                         'json': 'json_type_array',
                         'member': 'json_type_object',
@@ -257,18 +264,23 @@ class Annotations():
                     ExpansionError(
                         None,
                         decl,
-                        'Unable to deal with property of type {0}{1}'
-                        .format('*' * dereference, structtype.name)
+                        'Unable to deal with property of type {0}{1}{2}'
+                        .format(
+                            '*' * dereference,
+                            structtype.name,
+                            '[]' if arraydecl else ''
+                        )
                     )
 
         initial_err = None
         while dereference >= 0:
             try:
                 types = try_get_types(dereference)
-                if is_array:
+
+                if is_array and arraydecl is None:
                     types['member'] = types['json']
                     types['json'] = 'json_type_array'
-                return types
+                return (types, arraydecl)
             except ExpansionError as err:
                 # try again in case it's an array
                 if not is_array:
@@ -354,7 +366,7 @@ class Annotations():
                 )
 
             # assign types
-            types = self.get_types(decl, type_annotations)
+            types, arraydecl = self.get_types(decl, type_annotations)
             type_inits = [c_ast.NamedInitializer(
                 [c_ast.ID(ttype)],
                 c_ast.ID(t)
@@ -369,30 +381,50 @@ class Annotations():
                 [c_ast.ID('offset')],
                 self.offsetof(struct.name, name)
             ))
-            # calculate length offset
-            if types['json'] == 'json_type_array':
+            if arraydecl:
+                # static array
+                exprs.append(c_ast.NamedInitializer(
+                    [c_ast.ID('length')],
+                    arraydecl.dim
+                ))
+            elif types['json'] == 'json_type_array':
+                # calculate length offset
                 len_prop = Annotations.LENGTH_PROPERTY_NAME(name)
                 extra_decls[len_prop] = 'int'
                 exprs.append(c_ast.NamedInitializer(
                     [c_ast.ID('length_offset')],
                     self.offsetof(struct.name, len_prop)
                 ))
-                # TODO: STRIDE
-                # TODO: DEREFERENCE
+                exprs.append(c_ast.NamedInitializer(
+                    [c_ast.ID('dereference')],
+                    c_ast.Constant('int', '1')
+                ))
+
+            if types['json'] == 'json_type_array':
+                # assume PtrDecl for now
+                exprs.append(c_ast.NamedInitializer(
+                    [c_ast.ID('stride')],
+                    self.sizeof(decl.type.type)
+                ))
+
+
             fi = getframeinfo(currentframe())
             return c_ast.InitList(exprs, Coord(fi.filename, fi.lineno))
 
         fi = getframeinfo(currentframe())
         extra_decls = {}
         exprs = (make_prop_init_list(p, extra_decls) for p in struct.decls)
+        exprs = [e for e in exprs if e is not None]
+        # NULL terminator
+        exprs.append(c_ast.InitList([c_ast.Constant('int', '0')]))
+
         initlist = c_ast.InitList(
-            [e for e in exprs if e is not None],
+            exprs,
             Coord(fi.filename, fi.lineno)
         )
-        print(extra_decls)
+
         extra_decls = [make_extra_decl(name, t) for name, t in extra_decls.iteritems()]
-        for d in extra_decls:
-            d.show()
+
         return (initlist, extra_decls)
 
     def offsetof(self, struct_name, name):
@@ -403,6 +435,25 @@ class Annotations():
             ),
             c_ast.ID(name)
         ]))
+
+    def anonymize_type_decl(self, type_decl):
+        types = (c_ast.PtrDecl, c_ast.TypeDecl)
+        def anonymize(slot):
+            obj = getattr(type_decl, slot)
+            if obj.__class__ in types:
+                obj = self.anonymize_type_decl(obj)
+            if slot == 'declname':
+                obj = None
+            return obj
+
+        slots = [s for s in type_decl.__class__.__slots__
+                 if not s in ('coord', '__weakref__')]
+        args = [anonymize(s) for s in slots]
+        return type_decl.__class__(*args)
+
+    def sizeof(self, type_decl):
+        anonymous_type_decl = self.anonymize_type_decl(type_decl)
+        return c_ast.UnaryOp('sizeof', c_ast.Typename(None, [], anonymous_type_decl))
 
     def expand(self, ast, filename):
         """

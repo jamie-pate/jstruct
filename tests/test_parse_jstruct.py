@@ -63,20 +63,36 @@ class TestParseJStruct(unittest2.TestCase):
             {'content': '', 'line': 41, 'lineEnd': 41, 'name': 'array'},
             {'content': '', 'line': 45, 'lineEnd': 45, 'directive': 'endif', 'name': '#'}
         ]
-        # print(repr(annotations.annotations))
+
         self.assertEqual(annotations.annotations, expected)
 
+    def _normalize_src(self, h):
+        """
+        Normalize source for differencing
+        """
+        import re
+        # remove whitespace in multiples, and between .;,{} or before/after ={}
+        no_ws = re.compile(r'\s{2,}|(?<=[.;,{}])\s+(?=[.;,{}])|(?<=[={}])\s+|\s+(?=[{}=])')
+        # add back newlines after {} when followed by ,. or after ;
+        return re.sub(r'([{}](?=[,.])|;)', '\\1\n',
+            # remove all newlines
+            re.sub(r'\n', '',
+                # scrub whitespace
+                no_ws.sub('', h)
+            )
+        )
 
     def test_parser(self):
-        import parse, re
+        import parse
         from parse.jstruct_parse import parse_and_generate
+        self.maxDiff = None
 
         generated = parse_and_generate(
             td('data/basic.jstruct.h'),
             None,
             [td('../lib'), td('fake_libc_include')]
         )
-        no_nl = re.compile(r'\s{2,}|(?<=[.;,{}])\s+(?=[.;,{}])|(?<=[={}])\s+|\s+(?=[{}=])')
-        basic_h_stripped = re.sub(r'\n', '', no_nl.sub('', self.basic_h))
-        gen_stripped = re.sub(r'\n', '', no_nl.sub('', generated))
+        basic_h_stripped = self._normalize_src(self.basic_h)
+        gen_stripped = self._normalize_src(generated)
+
         self.assertEqual(gen_stripped, basic_h_stripped)

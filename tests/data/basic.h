@@ -59,21 +59,17 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
         },
         .offset=offsetof(struct my_json_data, tags),
         .length_offset=offsetof(struct my_json_data, tags__length__),
-        .stride=sizeof(char *),
-        .dereference=true
+        .dereference=1,
+        .stride=sizeof(char *)
     },
-    { NULL }
+    {0}
 };
 
 struct my_json_container {
     struct my_json_data main_data;
-
-    /* static arrays are automatic */
     struct my_json_data array_data[5];
-
-    /* pointer arrays need to be annotated */
-    //@array
     struct my_json_data *alloc_array_data;
+    int alloc_array_data__length__;
 };
 
 struct jstruct_object_property my_json_container__jstruct_properties__[] = {
@@ -81,29 +77,34 @@ struct jstruct_object_property my_json_container__jstruct_properties__[] = {
         .name="main_data",
         .type={
             .json=json_type_object,
-            .jstruct=jstruct_type__my_json_data__,
+            .jstruct=jstruct_type__my_json_data__
         },
-        .offset=offsetof(struct my_json_container, main_data),
+        .offset=offsetof(struct my_json_container, main_data)
     },
     {
         .name="array_data",
         .type={
-            .json=json_type_array,
             .member=json_type_object,
-            .jstruct=jstruct_type__my_json_data__,
+            .json=json_type_array,
+            .jstruct=jstruct_type__my_json_data__
         },
         .offset=offsetof(struct my_json_container, array_data),
         .length=5,
+        .stride=sizeof(struct my_json_data)
     },
     {
         .name="alloc_array_data",
         .type={
-            .json=json_type_array,
             .member=json_type_object,
-            .jstruct=jstruct_type__my_json_data__,
+            .json=json_type_array,
+            .jstruct=jstruct_type__my_json_data__
         },
         .offset=offsetof(struct my_json_container, alloc_array_data),
-    }
+        .length_offset=offsetof(struct my_json_container, alloc_array_data__length__),
+        .dereference=1,
+        .stride=sizeof(struct my_json_data)
+    },
+    {0}
 };
 
 #endif
