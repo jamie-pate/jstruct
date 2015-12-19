@@ -1,15 +1,20 @@
 # jstruct
 
-Declaratively translate data between JSON and C.
+C Library and code generator that declaratively transforms data between JSON and C.
 
 The jstruct preprocessor generates C code that transforms data between C structures and JSON strings.
 It reads annotated comments from the structure declarations in your header,
-and creates custom macros and functions that efficiently and automatically do your dirty work.
+and creates c data structures that allow it to efficiently and automatically import/export JSON data.
 
-## Supported So Far
+## Development Roadmap
 
- * Export structs containing primitive types and arrays to same. (char*, int, bool, uint64_t etc)
- * Mechanical parsing of annotated header files to produce augmented struct declarations and data tables used by the export process.
+ * ~~*M1*~~ Export structs containing primitive types and arrays to same. (char*, int, bool, uint64_t etc)
+ * ~~*M2*~~ Mechanical parsing of annotated header files to produce augmented struct declarations and data tables used by the export process.
+ * *M3* Export structs containing other structures and arrays (struct* and struct[])
+ * *M4* Import structs containing primitive types and arrays
+ * *M5* Import nested structs and arrays of structs
+
+
 
 # Sample
 
