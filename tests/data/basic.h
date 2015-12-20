@@ -2,7 +2,6 @@
 #define BASIC_H
 // Generated automatically by libjstruct. Do Not Modify.
 
-#include "generated_jstruct_types.h"
 #include <jstruct.h>
 #include <json-c/json_object.h>
 #include <stdint.h>
@@ -77,7 +76,7 @@ struct jstruct_object_property my_json_container__jstruct_properties__[] = {
         .name="main_data",
         .type={
             .json=json_type_object,
-            .jstruct=jstruct_type__my_json_data__
+            .jstruct=my_json_data__jstruct_properties__
         },
         .offset=offsetof(struct my_json_container, main_data)
     },
@@ -86,7 +85,7 @@ struct jstruct_object_property my_json_container__jstruct_properties__[] = {
         .type={
             .member=json_type_object,
             .json=json_type_array,
-            .jstruct=jstruct_type__my_json_data__
+            .jstruct=my_json_data__jstruct_properties__
         },
         .offset=offsetof(struct my_json_container, array_data),
         .length=5,
@@ -97,7 +96,7 @@ struct jstruct_object_property my_json_container__jstruct_properties__[] = {
         .type={
             .member=json_type_object,
             .json=json_type_array,
-            .jstruct=jstruct_type__my_json_data__
+            .jstruct=my_json_data__jstruct_properties__
         },
         .offset=offsetof(struct my_json_container, alloc_array_data),
         .length_offset=offsetof(struct my_json_container, alloc_array_data__length__),

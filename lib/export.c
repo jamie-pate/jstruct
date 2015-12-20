@@ -86,7 +86,8 @@ json_primitive_ctor(double, double)
 json_primitive_ctor(int32_t, int)
 
 json_ctor_decl(object) {
-    return json_object_new_object();
+    assert(property->type.jstruct != NULL);
+    return _jstruct_export(ptr, property->type.jstruct);
 }
 
 json_ctor_decl(array) {

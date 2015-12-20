@@ -10,7 +10,7 @@ and creates c data structures that allow it to efficiently and automatically imp
 
  * ~~*M1*~~ Export structs containing primitive types and arrays to same. (char*, int, bool, uint64_t etc)
  * ~~*M2*~~ Mechanical parsing of annotated header files to produce augmented struct declarations and data tables used by the export process.
- * *M3* Export structs containing other structures and arrays (struct* and struct[])
+ * ~~*M3*~~ Export structs containing other structures and arrays (struct* and struct[])
  * *M4* Import structs containing primitive types and arrays
  * *M5* Import nested structs and arrays of structs
 
@@ -77,8 +77,8 @@ int main() {
             },{.id=5},{.id=6}
         }
     }
-    /* malloc macro (automatically sets container.array_data__length__ = 2) (TODO) */
-    jstruct_init_malloc(container, .array_data, struct my_json_data, 2)
+    /* malloc macro (automatically sets container.array_data__length__ = 2) */
+    jstruct_init_malloc(container, array_data, struct my_json_data, 2)
 
     struct json_object *obj = jstruct_export(&container, my_json_container);
     if (obj) {

@@ -126,7 +126,6 @@ class Annotations():
     # TODO: make these configurable?
     PROPERTIES_NAME = '{0}__jstruct_properties__'.format
     JSON_TYPE_NAME = 'json_type_{0}'.format
-    JSTRUCT_TYPE_NAME = 'jstruct_type__{0}__'.format
     LENGTH_PROPERTY_NAME = '{0}__length__'.format
     NULLABLE_PROPERTY_NAME = '{0}__null__'.format
     """
@@ -196,7 +195,7 @@ class Annotations():
             'json': 'json_type_x',
             'member': 'json_type_x',
             'extra': 'jstruct_extra_type_x',
-            'jstruct': 'jstruct_type__x__'
+            'jstruct': 'x__jstruct_properties__'
         }
         and an ArrayDecl if one was found
         """
@@ -245,7 +244,7 @@ class Annotations():
                             )
                     return result
             else:
-                jstruct_type = self.JSTRUCT_TYPE_NAME(structtype.name)
+                jstruct_type = self.PROPERTIES_NAME(structtype.name)
                 # struct type
                 if arraydecl:
                     deref += 1

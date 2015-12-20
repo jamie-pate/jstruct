@@ -27,8 +27,8 @@ struct jstruct_object_property {
         // if the c type doesn't exactly match the json type, it's covered here.
         jstruct_extra_type extra;
         json_type member;
-        // this is really a jstruct_type, but that enum is generated separately for each consumer
-        int jstruct;
+        // this is really an annotated struct. Pointer to the property list for that struct
+        struct jstruct_object_property *jstruct;
     } type;
     unsigned int offset;
     bool nullable;

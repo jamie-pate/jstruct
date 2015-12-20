@@ -9,8 +9,6 @@ GENERATED = '// Generated automatically by libjstruct. Do Not Modify.\n\n'
 # these prepended headers get parsed, then output.
 # TODO: figure out how to add a comment after?
 PREPEND_HEADERS = '#include <jstruct.h>\n#include <json-c/json_object.h>\n'
-# TODO: custom prefix?
-LOCAL_JSTRUCT_TYPES = '#include "generated_jstruct_types.h"\n'
 GUARD_HEADERS_EXPR = re.compile(
     r'^\s*#ifndef\s+[A-Z_]+\s+#define\s+[A-Z_]+\s*\n',
     flags=re.IGNORECASE
@@ -61,11 +59,11 @@ def parse_and_generate(filename, outfilename=None, include_paths=[]):
     if GUARD_HEADERS_EXPR.search(result):
         result = re.sub(
             GUARD_HEADERS_EXPR,
-            r'\g<0>' + GENERATED + LOCAL_JSTRUCT_TYPES,
+            r'\g<0>' + GENERATED,
             result, count=1
         ) + '\n#endif\n'
     else:
-        result = GENERATED + LOCAL_JSTRUCT_TYPES
+        result = GENERATED
 
     if outfilename:
         with open(outfilename, 'w') as outfile:
