@@ -122,4 +122,4 @@ Requires `check` http://check.sourceforge.net/web/install.html
 
 Requires `python-unittest2` package
 
- * `python -m unittest2` - checks the functionality of the jstruct annotation parser
+ * `tests/test_all.py` - checks the functionality of the jstruct annotation parser
