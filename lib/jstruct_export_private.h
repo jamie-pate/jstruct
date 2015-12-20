@@ -19,7 +19,7 @@ typedef struct json_object *(*jstruct_export_ctor)
 
 #define jstruct_prop_get(type, data, property) *(type *)(jstruct_prop_addr(data, property))
 
-// stupid macro tamplating tricks!
+// stupid macro templating tricks!
 
 #define json_ctor_name(name) jstruct_json_object_new_ ## name
 
