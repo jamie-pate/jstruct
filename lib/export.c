@@ -81,7 +81,7 @@ json_ctor_decl(null) {
     return NULL;
 }
 
-json_primitive_ctor(json_bool, boolean)
+json_primitive_ctor(bool, boolean)
 json_primitive_ctor(double, double)
 json_primitive_ctor(int32_t, int)
 
