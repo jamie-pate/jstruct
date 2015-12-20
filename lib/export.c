@@ -1,6 +1,6 @@
 #include "jstruct.h"
-#include "export.h"
-#include "export_private.h"
+#include "jstruct_export.h"
+#include "jstruct_export_private.h"
 #include "jstruct_private.h"
 
 /* helpers that don't need to be macros */

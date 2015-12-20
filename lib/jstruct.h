@@ -45,6 +45,7 @@ struct jstruct_object_property {
 };
 
 // public headers
-#include "export.h"
+#include "jstruct_export.h"
+#include "jstruct_import.h"
 
 #endif

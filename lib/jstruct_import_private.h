@@ -1,0 +1,4 @@
+#ifndef JSTRUCT_IMPORT_PRIVATE_H
+#define JSTRUCT_IMPORT_PRIVATE_H
+
+#endif
