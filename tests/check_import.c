@@ -63,8 +63,8 @@ START_TEST(import_struct_data_with_errors) {
 } END_TEST
 
 START_TEST(import_struct_data) {
-// TODO: Milestone 4 is nested and array data
-#ifdef M4
+// TODO: Milestone 5 is nested and array data (feature complete!)
+#ifdef M5
     struct my_json_data data = get_data();
     struct my_json_container c = {0};
     int i;
