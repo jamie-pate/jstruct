@@ -6,10 +6,12 @@
 #include <json-c/json_object.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <jstruct_err.h>
 
 struct my_json_data {
     uint64_t id;
     int _id;
+    enum jstruct_err err;
     bool active;
     double ratio;
     char *name;
@@ -29,6 +31,14 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
         .offset=offsetof(struct my_json_data, id)
     },
     {
+        .name="err",
+        .type={
+            .json=json_type_int,
+            .extra=jstruct_enum_extra_type(enum jstruct_err)
+        },
+        .offset=offsetof(struct my_json_data, err)
+    },
+    {
         .name="active",
         .type={
             .json=json_type_boolean
@@ -41,7 +51,8 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
         .type={
             .json=json_type_double
         },
-        .offset=offsetof(struct my_json_data, ratio)
+        .offset=offsetof(struct my_json_data, ratio),
+        .null_offset=offsetof(struct my_json_data, ratio__null__)
     },
     {
         .name="other_name",

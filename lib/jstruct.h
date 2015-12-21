@@ -4,17 +4,33 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <json-c/json_object.h>
 
 typedef enum jstruct_extra_type {
     jstruct_extra_type_none = 0,
+    jstruct_extra_type_int8_t,
+    jstruct_extra_type_uint8_t,
+    jstruct_extra_type_int16_t,
+    jstruct_extra_type_uint16_t,
+    jstruct_extra_type_int32_t,
     jstruct_extra_type_uint32_t,
     jstruct_extra_type_int64_t,
     jstruct_extra_type_uint64_t,
     jstruct_extra_type_float,
+    // When expanding this list also add to:
+    // export.c:extra_constructor_list
+    // import.c:extra_importer_list
     jstruct_extra_type_end
 } jstruct_extra_type;
+
+#define jstruct_enum_extra_type(enumtype) \
+    sizeof(enumtype) == sizeof(uint8_t) ? jstruct_extra_type_uint8_t : \
+    sizeof(enumtype) == sizeof(uint16_t) ? jstruct_extra_type_uint16_t : \
+    sizeof(enumtype) == sizeof(uint32_t) ? jstruct_extra_type_uint32_t : \
+    sizeof(enumtype) == sizeof(uint64_t) ? jstruct_extra_type_uint64_t : \
+    jstruct_extra_type_none  /* this should fail with an assertion if used */
 
 struct jstruct_object_property {
     char *name;
@@ -30,19 +46,26 @@ struct jstruct_object_property {
         // this is really an annotated struct. Pointer to the property list for that struct
         struct jstruct_object_property *jstruct;
     } type;
-    unsigned int offset;
+    ptrdiff_t offset;
     bool nullable;
+    ptrdiff_t null_offset;
 
     // Array stuff
     // non-zero for a static array size.
     unsigned int length;
     // offset of __length__ member for this property in generated struct
-    unsigned int length_offset;
+    ptrdiff_t length_offset;
     // distance between array elements (in bytes)
-    unsigned int stride;
+    ptrdiff_t stride;
     // true to dereference members before constructing json (char ** -> char *)
     bool dereference;
 };
+
+// Allocate an array of type into member, and keep track of the array length
+#define jstruct_array_malloc(obj, member, type, length) \
+    assert(obj.member ## __length__ == 0); \
+    obj.member ## __length__ = length; \
+    obj.member = malloc(sizeof(type) * length)
 
 // public headers
 #include "jstruct_export.h"

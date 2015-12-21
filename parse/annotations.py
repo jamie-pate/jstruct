@@ -32,10 +32,11 @@ def idtype_or_struct_find(decl):
     """
     Find the IdentifierType or Struct inside a Decl. Count PtrDecls as dereference.
     arraydecl is an ArrayDecl is present
-    Returns a tuple of (idtype, structtype, arraydecl, dereference)
+    Returns a tuple of (idtype, structtype, enumtype, arraydecl, dereference)
     """
     idtype = decl.type
     structtype = None
+    enumtype = None
     arraydecl = None
     dereference = 0
     while idtype and not isinstance(idtype, c_ast.IdentifierType):
@@ -47,10 +48,14 @@ def idtype_or_struct_find(decl):
             structtype = idtype
             idtype = None
             break
+        if isinstance(idtype, c_ast.Enum):
+            enumtype = idtype
+            idtype = None
+            break
         if not hasattr(idtype, 'type'):
             raise ExpansionError(None, decl, 'Could not find IdentifierType or Struct')
         idtype = idtype.type
-    return idtype, structtype, arraydecl, dereference
+    return idtype, structtype, enumtype, arraydecl, dereference
 
 
 class NodeList():
@@ -215,13 +220,14 @@ class Annotations():
             'uint64_t': 'int',
         }
 
-        idtype, structtype, arraydecl, dereference = idtype_or_struct_find(decl)
+        idtype, structtype, enumtype, arraydecl, dereference = idtype_or_struct_find(decl)
         is_array = arraydecl is not None
 
         def try_get_types(deref):
             if idtype:
                 while deref > -1:
-                    ctype = ' '.join(idtype.names) + ('*' * deref)
+                    ctypename = ' '.join(idtype.names)
+                    ctype = ctypename + ('*' * deref)
                     result = {}
                     try:
                         result['json'] = Annotations.JSON_TYPE_NAME(json_type_map[ctype])
@@ -234,7 +240,7 @@ class Annotations():
                                 decl,
                                 '\nUnable to map {0} to json type\n'.format(ctype)
                             )
-                        result['extra'] = 'jstruct_extra_type_' + '_'.join(idtype.names)
+                        result['extra'] = 'jstruct_extra_type_' + ctypename
 
                         if result['extra'] not in self._ast_info['jstruct_extra_type']:
                             raise ExpansionError(
@@ -243,6 +249,11 @@ class Annotations():
                                 result['extra'] + ' is not defined'
                             )
                     return result
+            elif enumtype:
+                result = {}
+                result['json'] = Annotations.JSON_TYPE_NAME(json_type_map['int'])
+                result['extra'] = 'jstruct_enum_extra_type(enum {0})'.format(enumtype.name)
+                return result
             else:
                 jstruct_type = self.PROPERTIES_NAME(structtype.name)
                 # struct type
@@ -317,6 +328,7 @@ class Annotations():
             taken = []
             exprs = []
             prop_name = None
+            nullable = False
             type_annotations = {}
 
             annotations = self.get(decl.coord.line)
@@ -344,6 +356,7 @@ class Annotations():
                     init_name = c_ast.ID(name)
                     expr = c_ast.Constant('int', '1')
                     extra_decls[Annotations.NULLABLE_PROPERTY_NAME(decl.name)] = 'bool'
+                    nullable = True
 
                 if name in ['array']:
                     type_annotations[name] = a
@@ -380,6 +393,11 @@ class Annotations():
                 [c_ast.ID('offset')],
                 self.offsetof(struct.name, name)
             ))
+            if nullable:
+                exprs.append(c_ast.NamedInitializer(
+                    [c_ast.ID('null_offset')],
+                    self.offsetof(struct.name, Annotations.NULLABLE_PROPERTY_NAME(name))
+                ))
             if arraydecl:
                 # static array
                 exprs.append(c_ast.NamedInitializer(

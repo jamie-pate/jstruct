@@ -3,27 +3,6 @@
 #include "jstruct_export_private.h"
 #include "jstruct_private.h"
 
-/* helpers that don't need to be macros */
-
-static inline int
-jstruct_length_get(const void *data, const struct jstruct_object_property *property) {
-    assert(data);assert(property);
-    return *(int *)((unsigned char *)data + property->length_offset);
-}
-
-static inline void *
-jstruct_prop_ptr(const void *data, const struct jstruct_object_property *property, int index) {
-    unsigned char *ptr = ((unsigned char *)data + property->offset);
-    if (property->dereference) {
-        ptr = *(void **)ptr;
-    }
-    if (index) {
-        assert(property->stride);
-        ptr += index * property->stride;
-    }
-    return ptr;
-}
-
 json_ctor_decl(null);
 json_ctor_decl(boolean);
 json_ctor_decl(double);
@@ -32,11 +11,15 @@ json_ctor_decl(object);
 json_ctor_decl(array);
 json_ctor_decl(string);
 
+json_ctor_decl(int8_t);
+json_ctor_decl(uint8_t);
+json_ctor_decl(int16_t);
+json_ctor_decl(uint16_t);
+json_ctor_decl(int32_t);
 json_ctor_decl(uint32_t);
 json_ctor_decl(int64_t);
 json_ctor_decl(uint64_t);
 json_ctor_decl(float);
-// long long, unsigned, float, char, short etc
 
 struct jt_ctor constructor_list[] = {
     { json_type_null, json_ctor_name(null) },
@@ -50,6 +33,11 @@ struct jt_ctor constructor_list[] = {
 
 struct jt_extra_ctor extra_constructor_list[] = {
     { jstruct_extra_type_none, NULL },
+    { jstruct_extra_type_int8_t, json_ctor_name(int8_t) },
+    { jstruct_extra_type_uint8_t, json_ctor_name(uint8_t) },
+    { jstruct_extra_type_int16_t, json_ctor_name(int16_t) },
+    { jstruct_extra_type_uint16_t, json_ctor_name(uint16_t) },
+    { jstruct_extra_type_int32_t, json_ctor_name(int32_t) },
     { jstruct_extra_type_uint32_t, json_ctor_name(uint32_t) },
     { jstruct_extra_type_int64_t, json_ctor_name(int64_t) },
     { jstruct_extra_type_uint64_t, json_ctor_name(uint64_t) },
@@ -73,7 +61,7 @@ static inline void _init_constructors() {
             struct jt_extra_ctor *extra_type_ctor = &extra_constructor_list[i];
             extra_constructors[extra_type_ctor->type] = extra_type_ctor->ctor;
         }
-        assert(extra_constructors[jstruct_extra_type_uint32_t]);
+        assert(extra_constructors[jstruct_extra_type_int8_t]);
     }
 }
 
@@ -116,9 +104,13 @@ json_ctor_decl(array) {
 
 json_primitive_ctor(char *, string)
 
+json_extra_ctor(int8_t, int)
+json_extra_ctor(uint8_t, int)
+json_extra_ctor(int16_t, int)
+json_extra_ctor(uint16_t, int)
+json_extra_ctor(int32_t, int)
 json_extra_ctor(uint32_t, int64)
 json_extra_ctor(int64_t, int64)
-// daes this even work+
 json_extra_ctor(uint64_t, int64)
 json_extra_ctor(float, double)
 

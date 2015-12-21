@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <jstruct_err.h>
 
 //@json
 struct my_json_data {
@@ -18,6 +19,8 @@ struct my_json_data {
     /* don't include in json */
     //@private
     int _id;
+    // treated as uintX where X is the sizeof the enum
+    enum jstruct_err err;
 
     bool active;
 

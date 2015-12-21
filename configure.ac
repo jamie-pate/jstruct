@@ -5,6 +5,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_HEADER_STDC
 AC_HEADER_STDBOOL
 AC_HEADER_ASSERT
+AC_CHECK_HEADER([errno.h])
 AC_CHECK_LIB([json-c], [json_object_object_get_ex])
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])

@@ -2,11 +2,13 @@
 #include <check.h>
 #include "../lib/jstruct.h"
 #include "check_export.h"
+#include "check_import.h"
 
 Suite * jstruct_suite(void) {
 	Suite *s = suite_create("jstruct");
 
 	suite_add_tcase(s, export_test_case());
+	suite_add_tcase(s, import_test_case());
 
     return s;
 }

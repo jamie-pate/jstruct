@@ -70,3 +70,12 @@ def parse_and_generate(filename, outfilename=None, include_paths=[]):
             outfile.write(result)
 
     return result
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        print('Usage: {0} infile outfile [includepath [, includepath...]]'
+              .format(sys.argv[0]))
+        sys.exit(1)
+
+    parse_and_generate(sys.argv[1], sys.argv[2], sys.argv[3:])

@@ -14,7 +14,8 @@ and creates c data structures that allow it to efficiently and automatically imp
  * *M4* Import structs containing primitive types and arrays
  * *M5* Import nested structs and arrays of structs
 
-
+### Future
+Mix json_object * structs into annotated structs in a sane manner.
 
 # Sample
 
