@@ -7,7 +7,7 @@
 
 // call _jstruct_export with the correct property list for a specefied pointer and struct type
 #define jstruct_import(obj, data, type, errs) \
-    _jstruct_import(obj, data, type ## __jstruct_properties__)
+    _jstruct_import(obj, data, type ## __jstruct_properties__, errs)
 
 // returns jstruct_error with the most recent error (or .error=jstruct_error_none)
 // Errors will be populated with a json version of the entire error list.

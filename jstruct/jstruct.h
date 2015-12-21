@@ -68,7 +68,8 @@ struct jstruct_object_property {
     obj.member = malloc(sizeof(type) * length)
 
 // public headers
-#include "jstruct_export.h"
-#include "jstruct_import.h"
+#include "error.h"
+#include "export.h"
+#include "import.h"
 
 #endif

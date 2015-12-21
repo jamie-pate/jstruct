@@ -1,7 +1,7 @@
 #include "jstruct.h"
-#include "jstruct_import.h"
-#include "jstruct_import_private.h"
 #include "jstruct_private.h"
+#include "import.h"
+#include "import_private.h"
 
 /* helpers for import */
 static inline bool set_null(void *data, const struct jstruct_object_property *property) {

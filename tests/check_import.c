@@ -2,9 +2,9 @@
 #include <check.h>
 #include <json-c/json_object.h>
 #include "check_import.h"
-#include "../lib/jstruct.h"
-#include "../lib/jstruct_private.h"
-#include "../lib/jstruct_import.h"
+#include <jstruct/jstruct.h>
+#include <jstruct/jstruct_private.h>
+#include <jstruct/import.h>
 #include "data/basic.h"
 
 #define BIG_INT64 0xFFFFFFFFF
@@ -50,14 +50,21 @@ void test_data(struct my_json_data data, struct json_object *obj) {
 
 START_TEST(import_basic_data) {
     struct my_json_data data = get_data();
-    struct json_object *obj = jstruct_import(&data, my_json_data);
-    fprintf(stdout, "JSON OUTPUT: %s\n", json_object_to_json_string(obj));
+    struct json_object *obj = json_object_new_object();
+    jstruct_import(obj, &data, my_json_data, NULL);
+    fprintf(stdout, "JSON INPUT: %s\n", json_object_to_json_string(obj));
     fflush(stdout);
     test_data(data, obj);
 
 } END_TEST
 
+START_TEST(import_struct_data_with_errors) {
+    // TODO: do this
+} END_TEST
+
 START_TEST(import_struct_data) {
+// TODO: Milestone 4 is nested and array data
+#ifdef M4
     struct my_json_data data = get_data();
     struct my_json_container c = {0};
     int i;
@@ -97,6 +104,7 @@ START_TEST(import_struct_data) {
     }
     // TODO: autofree
     free(c.alloc_array_data);
+#endif
 
 } END_TEST
 
@@ -104,6 +112,7 @@ TCase *import_test_case(void) {
     TCase *tc = tcase_create("import");
 
     tcase_add_test(tc, import_basic_data);
+    tcase_add_test(tc, import_struct_data_with_errors);
     tcase_add_test(tc, import_struct_data);
 
     return tc;

@@ -2,16 +2,16 @@
 #define BASIC_H
 // Generated automatically by libjstruct. Do Not Modify.
 
-#include <jstruct.h>
+#include <jstruct/jstruct.h>
 #include <json-c/json_object.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <jstruct_err.h>
+#include <jstruct/error.h>
 
 struct my_json_data {
     uint64_t id;
     int _id;
-    enum jstruct_err err;
+    enum jstruct_error err;
     bool active;
     double ratio;
     char *name;
@@ -34,7 +34,7 @@ struct jstruct_object_property my_json_data__jstruct_properties__[] = {
         .name="err",
         .type={
             .json=json_type_int,
-            .extra=jstruct_enum_extra_type(enum jstruct_err)
+            .extra=jstruct_enum_extra_type(enum jstruct_error)
         },
         .offset=offsetof(struct my_json_data, err)
     },

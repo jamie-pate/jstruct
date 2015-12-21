@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <jstruct_err.h>
+#include <jstruct/error.h>
 
 //@json
 struct my_json_data {
@@ -20,7 +20,7 @@ struct my_json_data {
     //@private
     int _id;
     // treated as uintX where X is the sizeof the enum
-    enum jstruct_err err;
+    enum jstruct_error err;
 
     bool active;
 

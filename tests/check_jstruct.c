@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <check.h>
-#include "../lib/jstruct.h"
+#include <jstruct/jstruct.h>
 #include "check_export.h"
 #include "check_import.h"
 

@@ -1,7 +1,7 @@
 #include "jstruct.h"
-#include "jstruct_export.h"
-#include "jstruct_export_private.h"
 #include "jstruct_private.h"
+#include "export.h"
+#include "export_private.h"
 
 json_ctor_decl(null);
 json_ctor_decl(boolean);

@@ -2,9 +2,9 @@
 #include <check.h>
 #include <json-c/json_object.h>
 #include "check_export.h"
-#include "../lib/jstruct.h"
-#include "../lib/jstruct_private.h"
-#include "../lib/jstruct_export.h"
+#include <jstruct/jstruct.h>
+#include <jstruct/jstruct_private.h>
+#include <jstruct/export.h>
 #include "data/basic.h"
 
 #define BIG_INT64 0xFFFFFFFFF

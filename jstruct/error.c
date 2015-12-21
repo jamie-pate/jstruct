@@ -1,4 +1,5 @@
-#include "jstruct_error.h"
+#include "error.h"
+#include "error.init.h"
 #include <errno.h>
 #include <assert.h>
 

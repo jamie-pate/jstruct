@@ -3,8 +3,8 @@
 
 #include <errno.h>
 #include <json-c/json_object.h>
+#include "error.h"
 #include "jstruct_private.h"
-#include "jstruct_error.h"
 
 typedef struct jstruct_error_info(*jstruct_import_importer)
     (struct json_object *, const void *, const void *, const struct jstruct_object_property *);
