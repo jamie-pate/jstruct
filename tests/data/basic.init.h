@@ -1,11 +1,12 @@
 // Generated automatically by libjstruct. Do Not Modify.
-// This file must be included once only, in a single c file.
+// This file must be included directly in a single c file.
 
+#include "basic.h"
 #include <jstruct/jstruct.h>
 #include <json-c/json_object.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "basic.h"
+#include <jstruct/error.h>
 
 struct jstruct_object_property my_json_data__jstruct_properties__[] = {
     {

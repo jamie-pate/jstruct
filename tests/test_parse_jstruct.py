@@ -14,6 +14,8 @@ class TestParseJStruct(unittest2.TestCase):
     def setUp(self):
         with open(td('data/basic.h'), 'r') as infile:
             self.basic_h = infile.read()
+        with open(td('data/basic.init.h'), 'r') as infile:
+            self.basic_init_h = infile.read()
         with open(td('data/basic.jstruct.h'), 'r') as infile:
             self.basic_jstruct_h = infile.read()
 
@@ -58,7 +60,7 @@ class TestParseJStruct(unittest2.TestCase):
             {'content': 'BASIC_H', 'directive': 'define', 'name': '#'},
             {'content': '<stdint.h>', 'directive': 'include', 'name': '#'},
             {'content': '<stdbool.h>', 'directive': 'include', 'name': '#'},
-            {'content': '<jstruct_err.h>', 'directive': 'include', 'name': '#'},
+            {'content': '<jstruct/error.h>', 'directive': 'include', 'name': '#'},
             {'content': '', 'name': 'json'},
             {'content': '{\n        "title": "ID",\n        "description": "unique object id",\n        "type": "int"\n    }\n    ', 'name': 'schema'},
             {'content': '', 'name': 'private'},
@@ -79,8 +81,8 @@ class TestParseJStruct(unittest2.TestCase):
         no_ws = re.compile(r'\s{2,}|(?<=[.;,{}])\s+(?=[.;,{}])|(?<=[={}])\s+|\s+(?=[{}=])')
         # add back newlines after {} when followed by ,. or after ;
         return re.sub(r'([{}](?=[,.])|;)', '\\1\n',
-            # remove all newlines
-            re.sub(r'\n', '',
+            # remove all newlines except when followed by # or /
+            re.sub(r'\n(?![#\/])', '',
                 # scrub whitespace
                 no_ws.sub('', h)
             )
@@ -91,12 +93,15 @@ class TestParseJStruct(unittest2.TestCase):
         from parse.jstruct_parse import parse_and_generate
         self.maxDiff = None
 
-        generated = parse_and_generate(
+        header, init = parse_and_generate(
             td('data/basic.jstruct.h'),
-            None,
-            [td('../lib'), td('fake_libc_include')]
+            None, None,
+            [td('../'), td('../util/fake_libc_include/')]
         )
         basic_h_stripped = self._normalize_src(self.basic_h)
-        gen_stripped = self._normalize_src(generated)
+        basic_init_h_stripped = self._normalize_src(self.basic_init_h)
+        header_stripped = self._normalize_src(header)
+        init_stripped = self._normalize_src(init)
 
-        self.assertEqual(gen_stripped, basic_h_stripped)
+        self.assertEqual(header_stripped, basic_h_stripped)
+        self.assertEqual(init_stripped, basic_init_h_stripped)
