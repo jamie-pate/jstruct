@@ -1,0 +1,189 @@
+#-----------------------------------------------------------------
+# libjstruct: jstruct_parse.py
+#
+# https://github.com/jamie-pate/jstruct
+#
+# Copyright (C) 2015, Jamie Pate
+# License: MIT
+#-----------------------------------------------------------------
+
+from __future__ import print_function
+import sys
+
+from pycparser import parse_file, c_parser, c_generator, c_ast
+import re
+
+class Annotations():
+    """
+    Parse and apply annotations.
+    """
+    def __init__(self, filename=None):
+        if filename:
+            self.parse(filename)
+        else:
+            self.annotations = None
+            self.idx = None
+            self.len = None
+
+    def get(self, line):
+        """
+        Return a generator of all
+        annotations for the specified line.
+        line must be larger than any previous call,
+        except after calling parse() or reset()
+        """
+        a = True
+        while a:
+            a = self.get_next(line)
+            if a:
+                yield a
+
+    def get_next(self, line):
+        if self.idx >= self.len:
+            return None
+
+        if self.annotations[self.idx]['line'] <= line:
+            a = self.annotations[self.idx]
+            self.idx = self.idx + 1
+            return a
+        else:
+            return None
+
+    # general seek() instead ?
+    def reset(self):
+        """
+        reset the internal index to start pulling
+        annotations from the start.
+        """
+        this.idx = 0
+
+    def expand(self, ast):
+        """
+        Expand a pycparser ast with extra structures/data etc
+        """
+        pass
+
+    def parse(self, filename):
+        source = ''
+        with open(filename, 'r') as infile:
+            source = infile.read()
+        ANNOTATION_NAME = r'[a-zA-Z_]+'
+
+        # lex + yacc and i'm using a regex? HERESY!!
+        annotation_expr = re.compile(
+            r'(?:' +
+            # match newlines (so we can count them)
+            r'(?P<nl>\n)|' +
+            # match preprocessor statements
+            r'(?:^|\n)#(?P<ppname>define|ifn?def|endif|include)' +
+            # match preprocessor statement contents including line continuations
+            r'(?:\s+(?P<ppcontent>.*?(?:\\\n.*?)*))?(?=\n|$)' +
+            # match oneline comments
+            r'//[\n\s]*@(?P<olname>' + ANNOTATION_NAME + r')|' +
+            # oneline annotation content
+            r'(?P<olcontent>.*)' +
+            # match the entire multiline comment for line counting purposes
+            r'/\*(?P<mlwhole>(?:[\n\s])*?@' +
+            # match annotation name
+            r'(?P<mlname>' + ANNOTATION_NAME + r')[\s\n]*' +
+            # match everything after the @annotation in the comment
+            r'(?P<mlcontent>(?:\n|.)*?)'+
+            # end of multiline comment and non-capturing group
+            r')\*/)',)
+        annotations = []
+        line = 1
+        match = True
+        pos = 0
+
+        while match:
+
+            match = annotation_expr.search(source, pos)
+            if not match:
+                break
+
+            pos = match.end()
+            ppname = match.group('ppname')
+            olname = match.group('olname')
+            mlname = match.group('mlname')
+            name = ppname or olname or mlname
+            content = match.group('ppcontent') or match.group('mlwhole')
+            linecount = content.count('\n') if content else 0
+
+            if match.group('nl'):
+                line = line + 1
+            elif name:
+                if not ppname:
+                    content = match.group('olcontent') if olname else match.group('mlcontent')
+                annotations.append({
+                    'line': line,
+                    'lineEnd': line + linecount,
+                    'name': name,
+                    'content': content,
+                    'is_pp_directive': ppname is not None
+                })
+            else:
+                break
+
+            line = line + linecount
+
+        self.len = len(annotations)
+        self.idx = 0
+
+        self.annotations = annotations
+
+
+def parse_jstruct(filename):
+    parser = c_parser.CParser()
+    ast = parse_file(filename, use_cpp=True);
+    generator = c_generator.CGenerator()
+
+    return (ast, generator)
+
+
+def generate(ast, generator, annotations):
+    decls = [d for d in ast.ext if isinstance(d.type, c_ast.Struct)]
+
+    print('****DECLARATIONS****')
+    lastline = 0
+    from itertools import chain
+    for struct in decls:
+        line = struct.type.coord.line
+
+        for a in annotations.get(line):
+            print('@' + repr(a))
+
+        print('%s: %s %s' % (line, struct.type.__class__.__name__, struct.type.name))
+        for decl in struct.type.decls:
+            line = decl.type.coord.line
+
+            for a in annotations.get(line):
+                print('@@' + repr(a))
+            print(line)
+            decl.show()
+
+
+def parse_and_generate(filename, outfilename=None):
+    from os import path
+
+    annotations = Annotations(filename)
+
+    ast, generator = parse_jstruct(filename)
+
+    annotations.expand(ast)
+
+    result = generator.visit(ast)
+    print(repr(annotations.annotations))
+
+    if outfilename:
+        with open(outfilename, 'w') as outfile:
+            outfile.write(result)
+
+    return result
+
+if __name__ == '__main__':
+    import os
+    try:
+        os.mkdir('tests/data/.test')
+    except os.OSError:
+        pass
+    parse_and_generate('tests/data/basic.jstruct.h', 'tests/data/.test/basic.h')
