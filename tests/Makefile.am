@@ -10,6 +10,6 @@ check_jstruct_SOURCES = check_jstruct.c \
     $(top_builddir)/jstruct/errors.h \
     $(top_builddir)/jstruct/export.h \
     $(top_builddir)/jstruct/import.h \
-    data/basic.h
+    data/basic.h data/basic.init.h
 check_jstruct_CFLAGS = @CHECK_CFLAGS@
 check_jstruct_LDADD = $(top_builddir)/jstruct/libjstruct.la @CHECK_LIBS@

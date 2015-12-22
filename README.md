@@ -12,15 +12,15 @@ and creates c data structures that allow it to efficiently and automatically imp
  * ~~*M2*~~ Mechanical parsing of annotated header files to produce augmented struct declarations and data tables used by the export process.
  * ~~*M3*~~ Export structs containing other structures and arrays (struct* and struct[])
  * *M4* Import structs containing primitive types and arrays
- * *M5* Import nested structs and arrays of structs
-
-### Future
-Mix json_object * structs into annotated structs in a sane manner.
+ * *M5* Import nested structs and arrays of structs (feature complete)
+ * Bonus Milestones
+   * Hybrid export/import. Handle c structs with json_object members automatically
+   * Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
 
 # Sample
 
+main_jstruct.jstruct.h (converted to main_jstruct.h and main_jstruct.init.h)
 ```
-//main_jstruct.hstruct (converted to main_jstruct.h)
 //@json
 struct my_json_data {
     /*
@@ -56,10 +56,14 @@ struct my_json_container {
     /* as are struct arrays atm*/
     struct my_json_data *alloc_array_data;
 }
-
-//main.c
+```
+main.c
+```
 #include "main_jstruct.h"
-#include "json_object.h"
+// Initializers must be in a separate file annd included only in one c file
+#include "main_jstruct.init.h"
+
+#include <json-c/json_object.h>
 
 int main() {
     char *data_tags[] = {"main", "data", "sample"};
@@ -79,7 +83,7 @@ int main() {
         }
     }
     /* malloc macro (automatically sets container.array_data__length__ = 2) */
-    jstruct_init_malloc(container, array_data, struct my_json_data, 2)
+    jstruct_array_malloc(container, alloc_array_data, struct my_json_data, 2)
 
     struct json_object *obj = jstruct_export(&container, my_json_container);
     if (obj) {

@@ -1,5 +1,6 @@
 #include "error.h"
 #include "error.init.h"
+#include "error_info.init.h"
 #include <errno.h>
 #include <assert.h>
 

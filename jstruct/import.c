@@ -119,7 +119,7 @@ json_extra_importer(float, double)
 struct jstruct_error_info
 _jstruct_import(struct json_object *obj, const void *data,
         const struct jstruct_object_property *properties, struct json_object *errors) {
-
+    _init_importers();
     const struct jstruct_object_property *property;
     struct json_object *prop;
     struct jstruct_error_info result = jstruct_errok;

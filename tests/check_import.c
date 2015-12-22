@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <check.h>
-#include <json-c/json_object.h>
+#include "check_jstruct.h"
 #include "check_import.h"
 #include <jstruct/jstruct.h>
 #include <jstruct/jstruct_private.h>
@@ -9,53 +9,18 @@
 
 #define BIG_INT64 0xFFFFFFFFF
 
-struct my_json_data get_data() {
-    static char *data_tags[] = {"main", "data", "sample"};
-    struct my_json_data data = {
-        .id=BIG_INT64,
-        ._id=2,
-        .ratio=3.5,
-        .active=true,
-        .name="main_data",
-        .tags=data_tags,
-        .tags__length__=3,
-    };
-    return data;
-}
-
-void test_data(struct my_json_data data, struct json_object *obj) {
-    struct json_object *prop;
-    ck_assert_ptr_ne(obj, NULL);
-
-    ck_assert(json_object_object_get_ex(obj, "id", &prop) == true);
-    ck_assert_int_eq(json_object_get_int64(prop), data.id);
-    ck_assert(json_object_object_get_ex(obj, "_id", &prop) == false);
-
-    ck_assert(json_object_object_get_ex(obj, "ratio", &prop) == true);
-    ck_assert(json_object_get_double(prop) == data.ratio);
-
-    ck_assert(json_object_object_get_ex(obj, "active", &prop) == true);
-    ck_assert(json_object_get_boolean(prop) == true);
-
-    ck_assert(json_object_object_get_ex(obj, "other_name", &prop) == true);
-    ck_assert_str_eq(json_object_get_string(prop), data.name);
-
-    ck_assert(json_object_object_get_ex(obj, "tags", &prop) == true);
-    ck_assert_int_eq(json_object_array_length(prop), data.tags__length__);
-    int i;
-    for (i =0; i < data.tags__length__; ++i) {
-        ck_assert_str_eq(json_object_get_string(json_object_array_get_idx(prop, i)), data.tags[i]);
-    }
-}
-
 START_TEST(import_basic_data) {
-    struct my_json_data data = get_data();
-    struct json_object *obj = json_object_new_object();
+    struct my_json_data data = make_data();
+    fprintf(stdout, "my_data %ull\n", data.id);
+    fflush(stdout);
+    struct json_object *obj = make_json_obj();
+    fprintf(stdout, "JSON INPUT (basic): %s\n", json_object_to_json_string(obj));
+    fflush(stdout);
     jstruct_import(obj, &data, my_json_data, NULL);
-    fprintf(stdout, "JSON INPUT: %s\n", json_object_to_json_string(obj));
+    fprintf(stdout, "my_data %ull\n", data.id);
     fflush(stdout);
     test_data(data, obj);
-
+    json_object_put(obj);
 } END_TEST
 
 START_TEST(import_struct_data_with_errors) {
@@ -65,7 +30,7 @@ START_TEST(import_struct_data_with_errors) {
 START_TEST(import_struct_data) {
 // TODO: Milestone 5 is nested and array data (feature complete!)
 #ifdef M5
-    struct my_json_data data = get_data();
+    struct my_json_data data = make_data();
     struct my_json_container c = {0};
     int i;
     c.main_data = data;
@@ -104,6 +69,7 @@ START_TEST(import_struct_data) {
     }
     // TODO: autofree
     free(c.alloc_array_data);
+    json_object_put(obj);
 #endif
 
 } END_TEST
