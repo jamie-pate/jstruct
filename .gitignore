@@ -18,8 +18,8 @@
 /configure
 **/.deps
 **/.libs
-/lib/Makefile
-/lib/Makefile.in
+/jstruct/Makefile
+/jstruct/Makefile.in
 /libtool
 /m4
 /stamp-h1
@@ -36,7 +36,4 @@
 tests/check_jstruct
 tests/*.log
 tests/check_jstruct.trs
-
-
-
 .git
