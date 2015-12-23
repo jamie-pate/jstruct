@@ -11,15 +11,14 @@
 
 START_TEST(import_basic_data) {
     struct my_json_data data = make_data();
-    fprintf(stdout, "my_data %lu\n", data.id);
-    fflush(stdout);
+    struct my_json_data imported = {0};
     struct json_object *obj = make_json_obj();
     fprintf(stdout, "JSON INPUT (basic): %s\n", json_object_to_json_string(obj));
     fflush(stdout);
-    jstruct_import(obj, &data, my_json_data, NULL);
+    jstruct_import(obj, &imported, my_json_data, NULL);
     fprintf(stdout, "my_data %lu\n", data.id);
     fflush(stdout);
-    test_data(data, obj);
+    test_data(imported, obj);
     json_object_put(obj);
 } END_TEST
 
