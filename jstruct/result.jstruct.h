@@ -4,14 +4,14 @@
 /*
 TODO: create a make task for this and remove result.h and result.init.h from git.
 For now run the following instead:
-parse/jstruct_parse.py jstruct/error_info.jstruct.h jstruct util/fake_libc_include
+parse/jstruct_parse.py jstruct/result.jstruct.h . util/fake_libc_include
 */
 #include <json-c/json_object.h>
 #include <errno.h>
 // @json
 struct jstruct_result {
     // @private
-    struct arraylist *allocated;
+    struct array_list *allocated;
     enum jstruct_error error;
     char *message;
     char *property;

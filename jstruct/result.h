@@ -8,7 +8,7 @@
 #include <errno.h>
 struct jstruct_result
 {
-  struct arraylist *allocated;
+  struct array_list *allocated;
   enum jstruct_error error;
   char *message;
   char *property;
