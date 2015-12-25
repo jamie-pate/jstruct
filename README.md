@@ -6,20 +6,23 @@ The jstruct preprocessor generates C code that transforms data between C structu
 It reads annotated comments from the structure declarations in your header,
 and creates c data structures that allow it to efficiently and automatically import/export JSON data.
 
+After calling `jstruct_import()` the caller *must* call `array_list_free(result.allocated)` once they are finished with the imported struct or suffer memory leakage.
+The imported data may contain pointers to the `json_object` Those pointers shouldn't be accessed once all references have been removed (EG: with `json_object_put()`)
+
 ## Development Roadmap
 
  * ~~*M1*~~ Export structs containing primitive types and arrays to same. (char*, int, bool, uint64_t etc)
  * ~~*M2*~~ Mechanical parsing of annotated header files to produce augmented struct declarations and data tables used by the export process.
  * ~~*M3*~~ Export structs containing other structures and arrays (struct* and struct[])
- * *M4* Import structs containing primitive types and arrays
+ * ~~*M4*~~ Import structs containing primitive types and arrays
  * *M5* Import nested structs and arrays of structs (feature complete)
  * Bonus Milestones
-   * Hybrid export/import. Handle c structs with json_object members automatically
-   * Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
+   * *M5* Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
+   * *M7* Hybrid export/import. Handle c structs with json_object members automatically
 
 # Sample
 
-main_jstruct.jstruct.h (converted to main_jstruct.h and main_jstruct.init.h)
+main_jstruct.jstruct.h (generates main_jstruct.h and main_jstruct.init.h)
 ```
 //@json
 struct my_json_data {

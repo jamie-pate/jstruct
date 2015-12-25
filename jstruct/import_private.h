@@ -6,14 +6,14 @@
 #include "error.h"
 #include "jstruct_private.h"
 
-typedef struct jstruct_error_info(*jstruct_import_importer)
+typedef struct jstruct_result(*jstruct_import_importer)
     (struct json_object *, const void *, const void *, const struct jstruct_object_property *);
 
 // stupid macro templating tricks!
 
 #define json_importer_name(name) jstruct_json_object_get_ ## name
 
-#define json_importer_decl(name) static inline struct jstruct_error_info json_importer_name(name) \
+#define json_importer_decl(name) static inline struct jstruct_result json_importer_name(name) \
     (struct json_object *prop, const void *data, const void *ptr, \
         const struct jstruct_object_property *property)
 
@@ -23,11 +23,13 @@ typedef struct jstruct_error_info(*jstruct_import_importer)
     } \
     primitive_type *value = (primitive_type *)ptr; \
     *value = (primitive_type)json_object_get_ ## name(prop); \
+    return JSTRUCT_OK; \
 }
 
 #define json_extra_importer(primitive_type, name) json_importer_decl(primitive_type) { \
     primitive_type *value = (primitive_type *)ptr; \
     *value = (primitive_type)json_object_get_ ## name(prop); \
+    return JSTRUCT_OK; \
 }
 
 struct jt_importer {

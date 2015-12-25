@@ -67,4 +67,4 @@ TCase *export_test_case(void) {
     tcase_add_test(tc, export_struct_data);
 
     return tc;
-};
+}

@@ -1,19 +1,21 @@
-#ifndef JSTRUCT_ERROR_INFO_H
-#define JSTRUCT_ERROR_INFO_H
+#ifndef JSTRUCT_RESULT_H
+#define JSTRUCT_RESULT_H
 // Generated automatically by libjstruct. Do Not Modify.
 
 #include <jstruct/jstruct.h>
 #include <json-c/json_object.h>
 #include <json-c/json_object.h>
 #include <errno.h>
-struct jstruct_error_info
+struct jstruct_result
 {
+  struct arraylist *allocated;
   enum jstruct_error error;
   char *message;
   char *property;
+  int index;
   int last_errno;
-  struct json_object *inner_errors;
+  struct json_object *_inner_errors;
 };
-extern struct jstruct_object_property jstruct_error_info__jstruct_properties__[];
+extern struct jstruct_object_property jstruct_result__jstruct_properties__[];
 
 #endif

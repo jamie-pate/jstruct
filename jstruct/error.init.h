@@ -7,7 +7,7 @@
 char *jstruct_error_str[] = { JSTRUCT_ERROR_STR_INIT };
 
 // Returned by all fns that return jstruct_error when the operation succeeds
-struct jstruct_error_info jstruct_errok = {
+struct jstruct_result JSTRUCT_OK = {
     .error=jstruct_error_none,
     .message=JSTRUCT_ERROR_STR_NONE
 };

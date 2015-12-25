@@ -79,6 +79,8 @@ json_ctor_decl(object) {
 }
 
 json_ctor_decl(array) {
+    // arrays of arrays are not allowed currently
+    assert(property->type.member != json_type_array);
     struct json_object *arr = json_object_new_array();
     struct json_object *arr_member;
     if (arr) {
@@ -87,7 +89,7 @@ json_ctor_decl(array) {
         int len = property->length ? property->length : jstruct_length_get(data, property);
 
         assert(len);
-        memcpy(&member_prop, property, sizeof(member_prop));
+        member_prop = *property;
         member_prop.type.json = member_prop.type.member;
         for (i = 0; i < len; ++i) {
             void *ptr = jstruct_prop_ptr(data, property, i);

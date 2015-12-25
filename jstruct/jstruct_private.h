@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <json-c/json_object.h>
+#include <json-c/arraylist.h>
 #include "jstruct.h"
 
 #ifndef ARRAYSIZE
@@ -36,9 +37,26 @@
 
 #define jstruct_prop_get(type, data, property) *(type *)(jstruct_prop_addr(data, property))
 
+#define JSTRUCT_PROP_PTR_GET_NO_DEREF -1
+// Get the pointer of the property at the specified array index.
+// if index == JSTRUCT_PROP_PTR_GET_NO_DEREF and the property is a dereferenced pointer, return the actual array pointer
 void *jstruct_prop_ptr(const void *data, const struct jstruct_object_property *property, int index);
 int jstruct_length_get(const void *data, const struct jstruct_object_property *property);
+void jstruct_length_set(const void *data, const struct jstruct_object_property *property, int length);
 bool jstruct_null_get(const void *data, const struct jstruct_object_property *property);
 void jstruct_null_set(const void *data, const struct jstruct_object_property *property, bool value);
+
+typedef enum jstruct_allocated_type {
+    jstruct_allocated_type_arraylist,
+    jstruct_allocated_type_raw
+} jstruct_allocated_type;
+
+struct jstruct_allocated {
+    enum jstruct_allocated_type type;
+    void *data;
+};
+
+void jstruct_allocated_free(void *data);
+bool jstruct_allocated_add(struct array_list *arr, enum jstruct_allocated_type type, void *data);
 
 #endif
