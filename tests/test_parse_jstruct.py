@@ -67,6 +67,7 @@ class TestParseJStruct(unittest2.TestCase):
             {'content': '', 'name': 'nullable'},
             {'content': 'other_name', 'name': 'name'},
             {'content': '', 'name': 'json'},
+            {'content': '', 'name': 'json'},
             {'content': '', 'directive': 'endif', 'name': '#'}
         ]
 

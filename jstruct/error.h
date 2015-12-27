@@ -8,7 +8,8 @@ typedef enum jstruct_error {
     jstruct_error_not_nullable,
     jstruct_error_inner_error,
     jstruct_error_incorrect_type,
-    jstruct_error_invalid_type
+    jstruct_error_invalid_type,
+    jstruct_error_incorrect_length,
 } jstruct_error;
 #define JSTRUCT_ERROR_STR_NONE "No Error"
 #define JSTRUCT_ERROR_STR_INIT \
@@ -17,7 +18,8 @@ typedef enum jstruct_error {
     "Property not nullable but value missing or null", \
     "Child property error: see inner_error", \
     "JSON Property did is not of the correct type", \
-    "Invalid property type. (This shouldn't happen)"
+    "Invalid property type. (This shouldn't happen)", \
+    "Incorrect length specified for constant length array", \
 
 extern char *jstruct_error_str[];
 

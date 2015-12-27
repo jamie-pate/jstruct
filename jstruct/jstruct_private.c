@@ -19,6 +19,8 @@ int jstruct_length_get(const void *data, const struct jstruct_object_property *p
 
 void jstruct_length_set(const void *data, const struct jstruct_object_property *property, int length) {
     assert(data);assert(property);
+    // length_offset can't be 0 because the pointer to the array must come before it.
+    assert(property->length_offset);
     int *value = (int *)((unsigned char *)data + property->length_offset);
     *value = length;
 }

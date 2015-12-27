@@ -123,7 +123,16 @@ json_importer_decl(array) {
     jstruct_import_importer import = importers[json_type_index(property->type.member)];
     struct jstruct_object_property member_property = *property;
     member_property.type.json = member_property.type.member;
-    jstruct_length_set(data, property, len);
+    // property's constant length won't be set if it's a dynamic array/pointer
+    if (property->length == 0) {
+        jstruct_length_set(data, property, len);
+    } else {
+        jstruct_error_set(&result, jstruct_error_incorrect_length, property->name, property->length);
+        jstruct_error_array_add_err(errors, &result);
+        if (len != property->length) {
+            len = MAX(len, property->length);
+        }
+    }
     void *members = calloc(len, property->stride);
     *(void **)ptr = members;
 

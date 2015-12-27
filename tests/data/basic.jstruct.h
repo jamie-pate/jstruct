@@ -35,12 +35,18 @@ struct my_json_data {
 };
 
 //@json
+struct my_json_basic_container {
+    struct my_json_data main_data;
+};
+
+//@json
 struct my_json_container {
     struct my_json_data main_data;
 
     /* static arrays are automatic */
     struct my_json_data array_data[5];
-    /* TODO: @array shouldn't be automatic here */
+
+    /* TODO: @array shouldn't be automatic here or add @single or @deferefence annotation? */
     struct my_json_data *alloc_array_data;
 };
 
