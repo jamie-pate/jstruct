@@ -101,7 +101,7 @@ int main() {
 
  Required Packages: `autoconf`,`libtool`,`libjson-c-dev`, `python-pycparser`
 
- * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf) or `svn checkout svn://svn.code.sf.net/p/check/code/trunk check-code && cd check-code` and follow the instructions in `README`
+ * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf) or `git clone https://github.com/libcheck/check.git && cd check` and follow the instructions in `README`
  * git clone *repo*
  * `libtoolize`
  * `autoreconf --install`
