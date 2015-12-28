@@ -1,0 +1,21 @@
+dist: trusty
+sudo: required
+language:
+    - c
+    - python
+compiler: gcc
+python: 2.7
+install:
+    - sudo apt-get update -q
+    - sudo apt-get install  autoconf automake libtool check libjson-c-dev -y
+    - pip install --user pycparser unittest2
+script:
+    - libtoolize
+    - aclocal
+    - autoreconf --version
+    - autoreconf --install
+    - ./configure
+    - make
+    - make check
+    - cat tests/test-suite.log
+    - tests/test_all.py

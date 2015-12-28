@@ -17,7 +17,7 @@ The imported data may contain pointers to the `json_object` Those pointers shoul
  * ~~*M4*~~ Import structs containing primitive types and arrays
  * *M5* Import nested structs and arrays of structs (feature complete)
  * Bonus Milestones
-   * *M5* Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
+   * *M6* Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
    * *M7* Hybrid export/import. Handle c structs with json_object members automatically
 
 # Sample
@@ -131,3 +131,5 @@ Requires `check` http://check.sourceforge.net/web/install.html
 Requires `python-unittest2` package
 
  * `tests/test_all.py` - checks the functionality of the jstruct annotation parser
+
+<img src="https://travis-ci.org/jamie-pate/jstruct.svg">

@@ -27,9 +27,11 @@ START_TEST(import_basic_data) {
     array_list_free(status.allocated);
 } END_TEST
 
+/*
 START_TEST(import_struct_data_with_errors) {
     // TODO: do this
 } END_TEST
+*/
 
 START_TEST(import_basic_struct_data) {
     struct my_json_basic_container c = make_basic_container();

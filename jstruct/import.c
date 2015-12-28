@@ -10,6 +10,7 @@ static inline bool set_null(void *data, const struct jstruct_object_property *pr
     } else {
         return false;
     }
+    return true;
 }
 
 /* importers */
@@ -138,7 +139,6 @@ json_importer_decl(array) {
 
     for (i = 0; i < len; ++i) {
         arr_member = json_object_array_get_idx(prop, i);
-        struct jstruct_result member_result;
         if (json_object_get_type(arr_member) != member_property.type.json) {
             member_result = jstruct_error_new(jstruct_error_incorrect_type, property->name, i);
         } else {
