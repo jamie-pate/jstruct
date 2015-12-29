@@ -8,7 +8,7 @@ AC_HEADER_ASSERT
 
 AC_CHECK_HEADER([errno.h])
 AC_CHECK_LIB([json-c], [json_object_object_get_ex])
-AX_APPEND_COMPILE_FLAGS([ -Wall -Wpedantic -pedantic -std=c99 ])
+AX_APPEND_COMPILE_FLAGS([ -Wall -Wpedantic -pedantic -std=c99 -std=c11])
 AC_SUBST(AM_CPP_CHECKEDFLAGS)
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
