@@ -8,7 +8,21 @@ AC_HEADER_ASSERT
 
 AC_CHECK_HEADER([errno.h])
 AC_CHECK_LIB([json-c], [json_object_object_get_ex])
-AX_APPEND_COMPILE_FLAGS([ -Wall -Wpedantic -pedantic -std=c99 -std=c11])
+
+#check for broken gcc http://gcc.gnu.org/bugzilla/show_bug.cgi?id=53119
+my_save_cflags="$CFLAGS"
+CFLAGS="-Werror -Wall -std=c99"
+AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM(
+        [[struct tstruct { int i; }; struct ttstruct { struct tstruct t; };]],
+        [[struct ttstruct ttt = {0};if (ttt.t.i) { return ttt.t.i; }]]
+    )],
+    [WERR="-Werror"],
+    [WERR=""]
+)
+CFLAGS=$my_save_cflags
+
+AX_APPEND_COMPILE_FLAGS([ -Wall $WERR -Wpedantic -pedantic -std=c99 -std=c11 ])
 AC_SUBST(AM_CPP_CHECKEDFLAGS)
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
