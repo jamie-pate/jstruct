@@ -88,12 +88,13 @@ json_primitive_importer(int32_t, int)
 
 json_importer_decl(object) {
     assert(property->type.jstruct != NULL);
-    struct json_object *errors = json_object_new_object();
+    struct json_object *errors = json_object_new_array();
     if (errors == NULL) {
         return jstruct_error_new(jstruct_error_json_c_op_failed, property->name, 0);
     }
     struct jstruct_result result = _jstruct_import(prop, ptr, property->type.jstruct, errors);
-    if (result.error != jstruct_error_none) {
+    if (result.error != jstruct_error_none && json_object_array_length(errors)) {
+        jstruct_error_set(&result, jstruct_error_inner_error, NULL, -1);
         result._inner_errors = errors;
     } else {
         json_object_put(errors);
@@ -128,9 +129,9 @@ json_importer_decl(array) {
     if (property->length == 0) {
         jstruct_length_set(data, property, len);
     } else {
-        jstruct_error_set(&result, jstruct_error_incorrect_length, property->name, property->length);
-        jstruct_error_array_add_err(errors, &result);
         if (len != property->length) {
+            jstruct_error_set(&result, jstruct_error_incorrect_length, property->name, property->length);
+            jstruct_error_array_add_err(errors, &result);
             len = MAX(len, property->length);
         }
     }
@@ -145,14 +146,13 @@ json_importer_decl(array) {
             void *member_ptr = jstruct_prop_ptr(data, property, i);
             member_result = import(arr_member, data, member_ptr, &member_property);
         }
-        jstruct_error_consume(&result, &member_result, errors);
+        jstruct_error_consume(&result, &member_result, errors, NULL, i);
     }
     if (!jstruct_allocated_add(result.allocated, jstruct_allocated_type_raw, members)) {
         jstruct_error_set(&result, jstruct_error_json_c_op_failed, property->name, -1);
     }
     if (json_object_array_length(errors) > 0) {
         result._inner_errors = errors;
-        jstruct_error_set(&result, jstruct_error_inner_error, property->name, -1);
     } else {
         json_object_put(errors);
     }
@@ -175,6 +175,9 @@ struct jstruct_result
 _jstruct_import(struct json_object *obj, const void *data,
         const struct jstruct_object_property *properties, struct json_object *errors) {
     _init_importers();
+    if (errors != NULL && json_object_get_type(errors) != json_type_array) {
+        return jstruct_error_new(jstruct_error_errors_not_array_or_null, NULL, json_object_get_type(errors));
+    }
     const struct jstruct_object_property *property;
     struct json_object *prop;
     struct jstruct_result result = JSTRUCT_OK;
@@ -184,7 +187,7 @@ _jstruct_import(struct json_object *obj, const void *data,
         struct jstruct_result err;
         if (json_object_object_get_ex(obj, property->name, &prop)) {
             if (json_object_get_type(prop) != property->type.json) {
-                err = jstruct_error_new(jstruct_error_incorrect_type, property->name, 0);
+                err = jstruct_error_new(jstruct_error_incorrect_type, property->name, json_object_get_type(prop));
             } else {
                 jstruct_import_importer import = importers[json_type_index(property->type.json)];
                 err = import(prop, data, ptr, property);
@@ -194,7 +197,7 @@ _jstruct_import(struct json_object *obj, const void *data,
                 err = jstruct_error_array_add(errors, jstruct_error_not_nullable, property->name, 0);
             }
         }
-        jstruct_error_consume(&result, &err, errors);
+        jstruct_error_consume(&result, &err, errors, property->name, -1);
     }
     if (result.allocated->length == 0) {
         array_list_free(result.allocated);

@@ -14,11 +14,15 @@ struct jstruct_result {
     struct array_list *allocated;
     enum jstruct_error error;
     char *message;
+    // @nullable
     char *property;
-    int index;
+    int detail;
     int last_errno;
     // TODO: M6: automatically get a ref to inner json_object properties and import/export them?
     // @private
+    // _inner_errors may be assigned for any error type except jstruct_error_none! currently it's
+    // the caller's responsibility to json_object_put() this property.
+    // TODO: include this in *allocated (user could still json_object_get()) to retain a handle
     struct json_object *_inner_errors;
 };
 

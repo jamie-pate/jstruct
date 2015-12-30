@@ -104,7 +104,16 @@ json_ctor_decl(array) {
     return arr;
 }
 
-json_primitive_ctor(char *, string)
+json_ctor_decl(string) {
+    if (*(char **)ptr == NULL) {
+        assert(property->nullable);
+        return NULL;
+    } else {
+        assert(property->type.extra == jstruct_extra_type_none);
+        char *value = *(char **)ptr;
+        return json_object_new_string(value);
+    }
+}
 
 json_extra_ctor(int8_t, int)
 json_extra_ctor(uint8_t, int)
@@ -128,7 +137,8 @@ struct json_object *_jstruct_export(const void *data,
         for (property = properties; property->name; ++property) {
             void *ptr = jstruct_prop_ptr(data, property, 0);
             obj_prop = constructors[json_type_index(property->type.json)](data, ptr, property);
-            if (!obj_prop) {
+            assert(obj_prop || property->nullable);
+            if (!obj_prop && !property->nullable) {
                 json_object_put(obj);
                 return NULL;
             }

@@ -5,22 +5,22 @@
 #include <errno.h>
 #include <assert.h>
 
-struct jstruct_result jstruct_error_new(enum jstruct_error error, char *property, int index) {
+struct jstruct_result jstruct_error_new(enum jstruct_error error, char *property, int detail) {
     struct jstruct_result err = {0};
-    jstruct_error_set(&err, error, property, index);
+    jstruct_error_set(&err, error, property, detail);
     return err;
 }
 
-void jstruct_error_set(struct jstruct_result *result, enum jstruct_error error, char *property, int index) {
+void jstruct_error_set(struct jstruct_result *result, enum jstruct_error error, char *property, int detail) {
     result->error = error;
     result->property = property;
     result->message = jstruct_error_str[error];
     result->last_errno = errno;
-    result->index = index;
+    result->detail = detail;
 }
 
 void jstruct_error_set_err(struct jstruct_result *result, struct jstruct_result *err) {
-    jstruct_error_set(result, err->error, err->property, err->index);
+    jstruct_error_set(result, err->error, err->property, err->detail);
 }
 
 // clone a previous error, but set a new error code and update errno
@@ -63,15 +63,16 @@ jstruct_error_array_add_err(struct json_object *errors, struct jstruct_result *e
 }
 
 struct jstruct_result
-jstruct_error_array_add(struct json_object *errors, enum jstruct_error error, char *property, int index) {
-    struct jstruct_result err = jstruct_error_new(error, property, index);
+jstruct_error_array_add(struct json_object *errors, enum jstruct_error error, char *property, int detail) {
+    struct jstruct_result err = jstruct_error_new(error, property, detail);
     return jstruct_error_array_add_err(errors, &err);
 }
 
-void jstruct_error_consume(struct jstruct_result *consumer, struct jstruct_result *result, struct json_object *errors) {
+void jstruct_error_consume(struct jstruct_result *consumer, struct jstruct_result *result,
+        struct json_object *errors, char *property, int index) {
     if (result->error != jstruct_error_none) {
         *result = jstruct_error_array_add_err(errors, result);
-        jstruct_error_set_err(consumer, result);
+        jstruct_error_set(consumer, jstruct_error_inner_error, property, index);
     }
     if (result->allocated) {
         assert(consumer->allocated);

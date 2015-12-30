@@ -12,9 +12,10 @@ struct jstruct_result
   enum jstruct_error error;
   char *message;
   char *property;
-  int index;
+  int detail;
   int last_errno;
   struct json_object *_inner_errors;
+  bool property__null__;
 };
 extern struct jstruct_object_property jstruct_result__jstruct_properties__[];
 
