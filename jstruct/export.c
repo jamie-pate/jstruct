@@ -64,6 +64,14 @@ static inline void _init_constructors() {
         assert(extra_constructors[jstruct_extra_type_int8_t]);
     }
 }
+/* helpers for export */
+static inline bool get_null(const void *data, const struct jstruct_object_property *property) {
+    if (property->nullable) {
+        return jstruct_null_get(data, property);
+    } else {
+        return false;
+    }
+}
 
 json_ctor_decl(null) {
     return NULL;
@@ -110,8 +118,7 @@ json_ctor_decl(string) {
         return NULL;
     } else {
         assert(property->type.extra == jstruct_extra_type_none);
-        char *value = *(char **)ptr;
-        return json_object_new_string(value);
+        json_ctor_basic_body(char *, string)
     }
 }
 

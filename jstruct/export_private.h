@@ -15,17 +15,22 @@ typedef struct json_object *(*jstruct_export_ctor)
 #define json_ctor_decl(name) static inline struct json_object *json_ctor_name(name) \
     (const void *data, const void * ptr, const struct jstruct_object_property *property)
 
+#define json_ctor_basic_body(primitive_type, name) \
+    if (get_null(data, property)) { \
+        return NULL; \
+    } \
+    primitive_type value = *(primitive_type *)ptr; \
+    return json_object_new_ ## name(value);
+
 #define json_primitive_ctor(primitive_type, name) json_ctor_decl(name) { \
     if (property->type.extra != jstruct_extra_type_none) { \
         return extra_constructors[property->type.extra](data, ptr, property); \
     } \
-    primitive_type value = *(primitive_type *)ptr; \
-    return json_object_new_ ## name(value); \
+    json_ctor_basic_body(primitive_type, name) \
 }
 
 #define json_extra_ctor(primitive_type, name) json_ctor_decl(primitive_type) { \
-    primitive_type value = *(primitive_type *)ptr; \
-    return json_object_new_ ## name(value); \
+    json_ctor_basic_body(primitive_type, name) \
 }
 
 struct jt_ctor {

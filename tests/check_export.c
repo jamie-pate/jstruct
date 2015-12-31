@@ -26,11 +26,24 @@ START_TEST(export_struct_data) {
 
 } END_TEST
 
+START_TEST(export_null) {
+    struct my_json_data data = make_data();
+    data.ratio__null__ = true;
+    struct json_object *obj = jstruct_export(&data, my_json_data);
+    struct json_object *prop;
+    ck_assert(json_object_object_get_ex(obj, "ratio", &prop));
+    ck_assert_int_eq(json_object_get_type(prop), json_type_null);
+    ck_assert(prop == NULL);
+
+    json_object_put(obj);
+} END_TEST
+
 TCase *export_test_case(void) {
     TCase *tc = tcase_create("export");
 
     tcase_add_test(tc, export_basic_data);
     tcase_add_test(tc, export_struct_data);
+    tcase_add_test(tc, export_null);
 
     return tc;
 }
