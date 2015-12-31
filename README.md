@@ -15,7 +15,7 @@ The imported data may contain pointers to the `json_object` Those pointers shoul
  * ~~*M2*~~ Mechanical parsing of annotated header files to produce augmented struct declarations and data tables used by the export process.
  * ~~*M3*~~ Export structs containing other structures and arrays (struct* and struct[])
  * ~~*M4*~~ Import structs containing primitive types and arrays
- * *M5* Import nested structs and arrays of structs (feature complete)
+ * ~~*M5*~~ Import nested structs and arrays of structs (feature complete)
  * Bonus Milestones
    * *M6* Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
    * *M7* Hybrid export/import. Handle c structs with json_object members automatically
