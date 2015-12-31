@@ -90,7 +90,7 @@ START_TEST(import_struct_data_inner_error) {
         json_object_object_add(obj_data, "id", json_object_new_string("0"));
     )
     char expected_errors[] =
-        "[ { \"error\": 3, \"message\": \"Child property error: see inner_error\", \"property\": null, "
+        "[ { \"error\": 3, \"message\": \"Child property error: see inner_error\", \"property\": \"main_data\", "
         "\"detail\": -1, \"last_errno\": 3, \"inner_errors\": [ "
         "{ \"error\": 4, \"message\": \"JSON Property is not of the correct type\", \"property\": \"id\", "
         "\"detail\": 6, \"last_errno\": 3 } ] } ]";

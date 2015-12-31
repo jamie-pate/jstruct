@@ -94,7 +94,7 @@ json_importer_decl(object) {
     }
     struct jstruct_result result = _jstruct_import(prop, ptr, property->type.jstruct, errors);
     if (result.error != jstruct_error_none && json_object_array_length(errors)) {
-        jstruct_error_set(&result, jstruct_error_inner_error, NULL, -1);
+        jstruct_error_set(&result, jstruct_error_inner_error, property->name, -1);
         result._inner_errors = errors;
     } else {
         json_object_put(errors);
