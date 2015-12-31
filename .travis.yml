@@ -7,7 +7,7 @@ compiler: gcc
 python: 2.7
 install:
     - sudo apt-get update -q
-    - sudo apt-get install  autoconf automake libtool check libjson-c-dev -y
+    - sudo apt-get install  autoconf automake libtool check libjson-c-dev valgrind -y
     - pip install --user pycparser unittest2
 script:
     - libtoolize
@@ -19,3 +19,4 @@ script:
     - make check
     - cat tests/test-suite.log
     - tests/test_all.py
+    - LD_LIBRARY_PATH=jstruct/.libs/ CK_FORK="no" valgrind --leak-check=yes tests/.libs/check_jstruct

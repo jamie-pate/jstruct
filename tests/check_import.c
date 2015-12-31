@@ -79,6 +79,7 @@ START_TEST(import_struct_data) {
     setup \
     fprintf(stdout, "JSON INPUT (struct errors %s): %s\n", test, json_object_to_json_string(obj)); \
     fflush(stdout); \
+    errno = 0; \
     struct jstruct_result status = jstruct_import(obj, &c_imported, my_json_container, errors);
 
 #define ERROR_TEST_FREE \
@@ -91,11 +92,12 @@ START_TEST(import_struct_data_inner_error) {
     )
     char expected_errors[] =
         "[ { \"error\": 3, \"message\": \"Child property error: see inner_error\", \"property\": \"main_data\", "
-        "\"detail\": -1, \"last_errno\": 3, \"inner_errors\": [ "
+        "\"detail\": -1, \"last_errno\": 0, \"inner_errors\": [ "
         "{ \"error\": 4, \"message\": \"JSON Property is not of the correct type\", \"property\": \"id\", "
-        "\"detail\": 6, \"last_errno\": 3 } ] } ]";
+        "\"detail\": 6, \"last_errno\": 0 } ] } ]";
+    const char *found_errors = json_object_to_json_string(errors);
     ck_assert(status.error == jstruct_error_inner_error);
-    ck_assert_str_eq(json_object_to_json_string(errors), expected_errors);
+    ck_assert_str_eq(found_errors, expected_errors);
 
     ERROR_TEST_FREE
 } END_TEST
