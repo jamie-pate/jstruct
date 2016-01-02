@@ -1,4 +1,4 @@
-AC_INIT([libjstruct.la], [0.1.1], [jamie.pate@gmail.com])
+AC_INIT([libjstruct.la], [0.0.5], [jamie.pate@gmail.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
