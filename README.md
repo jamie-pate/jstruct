@@ -110,13 +110,11 @@ int main() {
 
 ## From release tarball
 
-Requires libjson-c
-
-(Coming soon)
+Requires `libjson-c-dev` with headers at `${INCLUDE_DIR}/json-c/*` >= `v0.0.10` (probably)
 
  * `tar -zxf jstruct.tar.gz`
  * `cd jstruct`
- * `./ configure && make && sudo make install`
+ * `./configure && make && sudo make install`
 
 # Tests
 
