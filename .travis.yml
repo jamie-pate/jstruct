@@ -22,4 +22,4 @@ script:
     - LD_LIBRARY_PATH=jstruct/.libs/ CK_FORK="no" valgrind --leak-check=yes tests/.libs/check_jstruct
     - make dist
     - tar -zxf libjstruct-la-*.tar.gz
-    - cd $(find ./ -name 'libjstruct-la-*.*.*') && ./configure && make && sudo make install
+    - cd $(find ./ -type d -name 'libjstruct-la-*.*.*') && ./configure && make && sudo make install
