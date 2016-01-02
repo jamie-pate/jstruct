@@ -110,7 +110,7 @@ int main() {
 
 ## From release tarball
 
-Requires `libjson-c-dev` with headers at `${INCLUDE_DIR}/json-c/*` >= `v0.0.10` (probably)
+Requires `libjson-c-dev` with headers at `${INCLUDE_DIR}/json-c/*` >= `v0.10` (probably)
 
  * `tar -zxf jstruct.tar.gz`
  * `cd jstruct`
