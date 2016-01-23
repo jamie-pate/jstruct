@@ -16,14 +16,14 @@ The imported data may contain pointers to the `json_object` Those pointers shoul
  * ~~*M3*~~ Export structs containing other structures and arrays (struct* and struct[])
  * ~~*M4*~~ Import structs containing primitive types and arrays
  * ~~*M5*~~ Import nested structs and arrays of structs (feature complete)
- * Bonus Milestones
-   * *M6* Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
-   * *M7* Hybrid export/import. Handle c structs with json_object members automatically
+ * Planned features
+   * Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
+   * Hybrid export/import. Handle c structs with json_object members automatically
 
 # Sample
 
 main_jstruct.jstruct.h (generates main_jstruct.h and main_jstruct.init.h)
-```
+```C
 //@json
 struct my_json_data {
     /*
@@ -46,7 +46,7 @@ struct my_json_data {
     double ratio;
     char *name;
 
-    /* automatically parsed as an array atm*/
+    /* automatically parsed as an array atm */
     char **tags;
 }
 
@@ -61,7 +61,7 @@ struct my_json_container {
 }
 ```
 main.c
-```
+```C
 #include "main_jstruct.h"
 // Initializers must be in a separate file annd included only in one c file
 #include "main_jstruct.init.h"
