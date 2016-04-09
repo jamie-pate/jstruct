@@ -13,7 +13,7 @@ INIT_INSTRUCTIONS = '// This file must be included directly in a single c file.\
 INCLUDE_H = '#include "{0}"\n'.format
 # these prepended headers get parsed, then output.
 # TODO: figure out how to add a comment after?
-PREPEND_HEADERS = '#include <jstruct/jstruct.h>\n#include <json-c/json_object.h>\n'
+PREPEND_HEADERS = '#include {JSTRUCT_H}\n#include {JSON_OBJECT_H}\n'.format
 GUARD_HEADERS_EXPR = re.compile(
     r'^\s*#ifndef\s+[A-Z_]+\s+#define\s+[A-Z_]+\s*\n',
     flags=re.IGNORECASE
@@ -23,26 +23,33 @@ FILENAME_EXPR = re.compile(
     r'^(?P<basename>[^.]+)\.(?:(?P<ext2>[^.]+)\.)?(?P<ext>[^.]+)$'
 )
 
-def parse_jstruct(filename, include_paths=[]):
+def parse_jstruct(filename, include_paths=[], defines=[]):
     parser = c_parser.CParser()
     with open(filename, 'r') as infile:
         text = infile.read()
+    define_map = {
+        'JSTRUCT_H': '<jstruct/jstruct.h>',
+        'JSON_OBJECT_H': '<json-c/json_object.h>',
+        'ARRAYLIST_H': '<json-c/arraylist.h>'
+    }
+    define_map.update({ds[0]: ds[1] for ds in (d.split('=') for d in defines)})
+    defines = ['{0}={1}'.format(*kv) for kv in define_map.iteritems()]
 
     # insert some header includes and a 'do not modify'
     text = re.sub(
         GUARD_HEADERS_EXPR,
-        r'\g<0>' + GENERATED + PREPEND_HEADERS,
+        r'\g<0>' + GENERATED + PREPEND_HEADERS(**define_map),
         text, count=1
     )
-
     pptext, err = preprocess(text,
         include_paths=include_paths,
-        defines=['__attribute__(x)=']
+        defines=['__attribute__(x)='] + defines
     )
     if err:
         import os
         rel_filename = os.path.relpath(filename)
         err = err.replace('<stdin>', rel_filename)
+        print(repr(defines))
         raise Exception('C Preprocessor: ' + err)
 
     ast = parser.parse(pptext, filename=filename)
@@ -88,7 +95,7 @@ def split_ast(ast):
     init_ast = c_ast.FileAST(init_decls)
     return (out_ast, init_ast)
 
-def parse_and_generate(filename, out_filename=None, init_filename=None, include_paths=[]):
+def parse_and_generate(filename, out_filename=None, init_filename=None, include_paths=[], defines=[]):
     """
     parse the file at filename.
     if out_filename and init_filename are None:return a tuple containing the generated file's names.
@@ -107,7 +114,7 @@ def parse_and_generate(filename, out_filename=None, init_filename=None, include_
         init_dir = path.dirname(init_filename)
         rel_filename = path.relpath(out_filename, init_dir)
 
-    ast, text = parse_jstruct(filename, include_paths=include_paths)
+    ast, text = parse_jstruct(filename, include_paths=include_paths, defines=defines)
     annotations = Annotations(text)
 
     annotations.expand(ast, '<stdin>')
@@ -158,6 +165,7 @@ if __name__ == '__main__':
         help='initializer header file name. (python re.sub() repl syntax)')
     argparser.add_argument('-s', '--silent', dest='silent', action='store_true',
         help='silent mode')
+    argparser.add_argument('-D', '--define', action='append', default=[])
     argparser.add_argument('includedir', type=str, nargs='*',
         help='override/extra directories to pass to the c preprocessor with -I. ' +
             '(Suggested: util/fake_libc_include)'
@@ -167,7 +175,8 @@ if __name__ == '__main__':
         args.infile,
         args.outfile,
         args.initfile,
-        args.includedir
+        args.includedir,
+        args.define
     )
     if not args.silent:
         print(

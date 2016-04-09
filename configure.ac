@@ -7,6 +7,8 @@ AC_HEADER_STDBOOL
 AC_HEADER_ASSERT
 
 AC_CHECK_HEADER([errno.h])
+AC_CHECK_HEADER([json-c/json_object.h], [AC_DEFINE([JSON_OBJECT_H], [<json-c/json_object.h>], [Location of json_object.h header])])
+AC_CHECK_HEADER([json-c/arraylist.h], [AC_DEFINE([ARRAYLIST_H], [<json-c/arraylist.h>], [Location of arraylist.h header])])
 AC_CHECK_LIB([json-c], [json_object_object_get_ex])
 
 #check for broken gcc http://gcc.gnu.org/bugzilla/show_bug.cgi?id=53119

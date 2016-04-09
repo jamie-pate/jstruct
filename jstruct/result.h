@@ -2,9 +2,9 @@
 #define JSTRUCT_RESULT_H
 // Generated automatically by libjstruct. Do Not Modify.
 
-#include <jstruct/jstruct.h>
-#include <json-c/json_object.h>
-#include <json-c/json_object.h>
+#include "jstruct.h"
+#include JSON_OBJECT_H
+#include JSON_OBJECT_H
 #include <errno.h>
 struct jstruct_result
 {

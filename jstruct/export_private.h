@@ -1,7 +1,7 @@
 #ifndef JSTRUCT_EXPORT_PRIVATE_H
 #define JSTRUCT_EXPORT_PRIVATE_H
 
-#include <json-c/json_object.h>
+#include JSON_OBJECT_H
 #include "jstruct_private.h"
 
 

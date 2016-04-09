@@ -1,10 +1,9 @@
-#include <stdio.h>
-#include <check.h>
-#include "check_jstruct.h"
 #include "check_export.h"
-#include <jstruct/jstruct.h>
-#include <jstruct/jstruct_private.h>
-#include <jstruct/export.h>
+#include <stdio.h>
+#include "check_jstruct.h"
+#include "../jstruct/jstruct.h"
+#include "../jstruct/jstruct_private.h"
+#include "../jstruct/export.h"
 #include "data/basic.h"
 
 START_TEST(export_basic_data) {

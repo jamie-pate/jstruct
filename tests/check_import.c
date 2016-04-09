@@ -1,12 +1,11 @@
-#include <stdio.h>
-#include <check.h>
-#include <json-c/json_object.h>
-#include <json-c/arraylist.h>
-#include "check_jstruct.h"
 #include "check_import.h"
-#include <jstruct/jstruct.h>
-#include <jstruct/jstruct_private.h>
-#include <jstruct/import.h>
+#include <stdio.h>
+#include JSON_OBJECT_H
+#include ARRAYLIST_H
+#include "check_jstruct.h"
+#include "../jstruct/jstruct.h"
+#include "../jstruct/jstruct_private.h"
+#include "../jstruct/import.h"
 #include "data/basic.h"
 
 START_TEST(import_basic_data) {
@@ -19,7 +18,7 @@ START_TEST(import_basic_data) {
     fprintf(stdout, "IMPORT STATUS %d %d\n", status.error, jstruct_error_none);
     fflush(stdout);
     ck_assert(status.error == jstruct_error_none);
-    fprintf(stdout, "my_data %lu\n", data.id);
+    fprintf(stdout, "my_data %llu\n", data.id);
     fflush(stdout);
     test_data(imported, obj);
     json_object_put(obj);

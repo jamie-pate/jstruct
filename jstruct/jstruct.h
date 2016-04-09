@@ -1,12 +1,16 @@
 #ifndef LIBJSTRUCT_JSTRUCT_H
 #define LIBJSTRUCT_JSTRUCT_H
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <json-c/json_object.h>
+#include JSON_OBJECT_H
 
 typedef enum jstruct_extra_type {
     jstruct_extra_type_none = 0,

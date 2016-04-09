@@ -1,7 +1,11 @@
 #ifndef CHECK_JSTRUCT_H
 #define CHECK_JSTRUCT_H
 
-#include <json-c/json_object.h>
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
+#include JSON_OBJECT_H
 #define BIG_INT64 0xFFFFFFFFF
 
 // Helpers functions

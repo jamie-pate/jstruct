@@ -2,7 +2,7 @@
 #define JSTRUCT_IMPORT_H
 
 #include <stdbool.h>
-#include <json-c/json_object.h>
+#include JSON_OBJECT_H
 #include "jstruct.h"
 
 // call _jstruct_export with the correct property list for a specefied pointer and struct type

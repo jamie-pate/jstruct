@@ -1,12 +1,12 @@
+#include "check_jstruct.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <check.h>
-#include <json-c/json_object.h>
-#include <jstruct/jstruct.h>
+#include JSON_OBJECT_H
+#include "../jstruct/jstruct.h"
 
 // for ARRAYSIZE, assert.h
 #include <jstruct/jstruct_private.h>
-#include "check_jstruct.h"
 #include "check_export.h"
 #include "check_import.h"
 // Only include once or there will be linker errors
@@ -101,7 +101,7 @@ struct json_object *make_json_basic_container_obj() {
 void test_data(struct my_json_data data, struct json_object *obj) {
     struct json_object *prop;
     ck_assert_ptr_ne(obj, NULL);
-	fprintf(stdout, "TEST_ID: %lu:%d %s\n", data.id, data._id, json_object_to_json_string(obj));
+	fprintf(stdout, "TEST_ID: %llu:%d %s\n", data.id, data._id, json_object_to_json_string(obj));
 	fflush(stdout);
 
     ck_assert(json_object_object_get_ex(obj, "id", &prop) == true);

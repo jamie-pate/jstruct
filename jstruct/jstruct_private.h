@@ -1,9 +1,13 @@
 #ifndef JSTRUCT_PRIVATE_H
 #define JSTRUCT_PRIVATE_H
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <assert.h>
-#include <json-c/json_object.h>
-#include <json-c/arraylist.h>
+#include JSON_OBJECT_H
+#include ARRAYLIST_H
 #include "jstruct.h"
 
 #ifndef ARRAYSIZE

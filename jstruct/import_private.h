@@ -2,7 +2,7 @@
 #define JSTRUCT_IMPORT_PRIVATE_H
 
 #include <errno.h>
-#include <json-c/json_object.h>
+#include JSON_OBJECT_H
 #include "error.h"
 #include "jstruct_private.h"
 
