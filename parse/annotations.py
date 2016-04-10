@@ -327,13 +327,15 @@ class Annotations():
             """
             taken = []
             exprs = []
-            prop_name = None
+            json_name = None
             nullable = False
             type_annotations = {}
 
             annotations = self.get(decl.coord.line)
             for a in annotations:
                 name = a['name']
+                if name == '#':
+                    continue
                 taken.append(name)
                 # skip private properties
                 if name == 'private':
@@ -347,10 +349,12 @@ class Annotations():
                 if name in ['schema', 'name']:
                     init_name = c_ast.ID(name)
                     if name == 'name':
-                        prop_name = name
+                        json_name = a['content']
                     if a['content'] == None:
                         raise ExpansionError(a, decl, 'Content is None')
                     expr = c_ast.Constant('string', str_literal(a['content']))
+                    
+
 
                 if name in ['nullable']:
                     init_name = c_ast.ID(name)
@@ -367,13 +371,15 @@ class Annotations():
 
                 exprs.append(c_ast.NamedInitializer([init_name], expr))
 
+            prop_name = type_find(decl, c_ast.TypeDecl).declname
+
             # name the property if it hasn't already been named
-            if not 'name' in taken:
-                name = type_find(decl, c_ast.TypeDecl).declname
+            if json_name is None:
+                json_name = prop_name
                 exprs.append(
                     c_ast.NamedInitializer(
                         [c_ast.ID('name')],
-                        c_ast.Constant('string', str_literal(name))
+                        c_ast.Constant('string', str_literal(json_name))
                     )
                 )
 
@@ -391,12 +397,12 @@ class Annotations():
             # calculate struct offset
             exprs.append(c_ast.NamedInitializer(
                 [c_ast.ID('offset')],
-                self.offsetof(struct.name, name)
+                self.offsetof(struct.name, prop_name)
             ))
             if nullable:
                 exprs.append(c_ast.NamedInitializer(
                     [c_ast.ID('null_offset')],
-                    self.offsetof(struct.name, Annotations.NULLABLE_PROPERTY_NAME(name))
+                    self.offsetof(struct.name, Annotations.NULLABLE_PROPERTY_NAME(prop_name))
                 ))
             if arraydecl:
                 # static array
@@ -406,7 +412,7 @@ class Annotations():
                 ))
             elif types['json'] == 'json_type_array':
                 # calculate length offset
-                len_prop = Annotations.LENGTH_PROPERTY_NAME(name)
+                len_prop = Annotations.LENGTH_PROPERTY_NAME(prop_name)
                 extra_decls[len_prop] = 'int'
                 exprs.append(c_ast.NamedInitializer(
                     [c_ast.ID('length_offset')],
@@ -555,11 +561,11 @@ class Annotations():
             # match newlines (so we can count them)
             r'(?P<nl>\n)|' +
             # match preprocessor statements
-            r'((?:^|(?!\n))#(?P<ppname>define|ifn?def|endif|include)' +
+            r'((?:^|(?!\n))#(?P<ppname>define|ifn?def|else|endif|include)' +
             # match preprocessor statement contents including line continuations
-            r'(?:\s+(?P<ppcontent>.*?(?:\\\n.*?)*))?(?=\n|$|//|/\*))|' +
+            r'(?:[ \t]+(?P<ppcontent>.*?(?:\\\n.*?)*))?(?=\n|$|//|/\*))|' +
             # match oneline comments
-            r'(?://\s*@(?P<olname>' + ANNOTATION_NAME + r') *' +
+            r'(?://[ \t]*@(?P<olname>' + ANNOTATION_NAME + r') *' +
             # oneline annotation content
             r'(?P<olcontent>.*)?)|' +
             # match the entire multiline comment for line counting purposes

@@ -15,7 +15,7 @@ class TestParseJStruct(unittest2.TestCase):
         with open(td('data/basic.h'), 'r') as infile:
             self.basic_h = infile.read()
         with open(td('data/basic.init.c'), 'r') as infile:
-            self.basic_init_h = infile.read()
+            self.basic_init_c = infile.read()
         with open(td('data/basic.jstruct.h'), 'r') as infile:
             self.basic_jstruct_h = infile.read()
 
@@ -54,7 +54,7 @@ class TestParseJStruct(unittest2.TestCase):
         for a in annotations:
             del a['line']
             del a['lineEnd']
-
+        self.maxDiff = 100000
         expected = [
             {'content': 'BASIC_H', 'directive': 'ifndef', 'name': '#'},
             {'content': 'BASIC_H', 'directive': 'define', 'name': '#'},
@@ -63,6 +63,9 @@ class TestParseJStruct(unittest2.TestCase):
             {'content': '<jstruct/error.h>', 'directive': 'include', 'name': '#'},
             {'content': '', 'name': 'json'},
             {'content': '{\n        "title": "ID",\n        "description": "unique object id",\n        "type": "int"\n    }\n    ', 'name': 'schema'},
+            {'content': 'DONT_USE_UINT64_T_FOR_SOME_REASON', 'directive': 'ifndef', 'name': '#'},
+            {'content': None, 'directive': 'else', 'name': '#'},
+            {'content': None, 'directive': 'endif', 'name': '#'},
             {'content': '', 'name': 'private'},
             {'content': '', 'name': 'nullable'},
             {'content': 'other_name', 'name': 'name'},
@@ -100,9 +103,9 @@ class TestParseJStruct(unittest2.TestCase):
             [td('../'), td('../util/fake_libc_include/')]
         )
         basic_h_stripped = self._normalize_src(self.basic_h)
-        basic_init_h_stripped = self._normalize_src(self.basic_init_h)
+        basic_init_c_stripped = self._normalize_src(self.basic_init_c)
         header_stripped = self._normalize_src(header)
         init_stripped = self._normalize_src(init)
 
         self.assertEqual(header_stripped, basic_h_stripped)
-        self.assertEqual(init_stripped, basic_init_h_stripped)
+        self.assertEqual(init_stripped, basic_init_c_stripped)

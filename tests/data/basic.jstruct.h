@@ -14,8 +14,11 @@ struct my_json_data {
         "type": "int"
     }
     */
+#ifndef DONT_USE_UINT64_T_FOR_SOME_REASON
     uint64_t id;
-
+#else
+    unsigned long long id;
+#endif
     /* don't include in json */
     //@private
     int _id;
