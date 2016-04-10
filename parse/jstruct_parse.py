@@ -133,7 +133,8 @@ def parse_and_generate(filename, out_filename=None, init_filename=None, include_
     else:
         out_result = GENERATED + out_result
     init_result = re.sub(GUARD_HEADERS_EXPR, '', init_result)
-    init_result = GENERATED1NL + INIT_INSTRUCTIONS + INCLUDE_H(rel_filename) + init_result
+    init_instructions = INIT_INSTRUCTIONS if init_filename and init_filename.endswith('.h') else ''
+    init_result = GENERATED1NL + init_instructions + INCLUDE_H(rel_filename) + init_result
 
     if out_filename:
         with open(out_filename, 'w') as out_file:
@@ -161,9 +162,9 @@ if __name__ == '__main__':
         default=r'\g<basename>.h',
         help='output header file name. (python re.sub() repl syntax)')
     argparser.add_argument('-i', '--init', dest='initfile', type=str,
-        default=r'\g<basename>.init.h',
-        help='initializer header file name. (python re.sub() repl syntax)')
-    argparser.add_argument('-s', '--silent', dest='silent', action='store_true',
+        default=r'\g<basename>.init.c',
+        help='initializer code file name. (python re.sub() repl syntax)')
+    argparser.add_argument('-s', '--silent', action='store_true',
         help='silent mode')
     argparser.add_argument('-D', '--define', action='append', default=[])
     argparser.add_argument('includedir', type=str, nargs='*',
@@ -179,8 +180,10 @@ if __name__ == '__main__':
         args.define
     )
     if not args.silent:
+        remember = '\nRemember to include {1} directly in a single .c file' \
+            if args.initfile.endswith('.h') else ''
         print(
-            ('Success: {0} and {1} generated successfully.\n' +
-             'Remember to include {1} directly in a single .c file')
+            ('Success: {0} and {1} generated successfully.' +
+             remember)
             .format(outfile, initfile)
         )

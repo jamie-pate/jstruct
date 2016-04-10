@@ -28,7 +28,7 @@ AX_APPEND_COMPILE_FLAGS([ -Wall $WERR -Wpedantic -pedantic -std=c99 -std=c11 ])
 AC_SUBST(AM_CPP_CHECKEDFLAGS)
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
-AM_INIT_AUTOMAKE([foreign -Werror])
+AM_INIT_AUTOMAKE([foreign -Werror subdir-objects])
 AM_PROG_AR
 LT_INIT
 AC_PROG_CC

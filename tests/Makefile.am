@@ -3,7 +3,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/
 
 TESTS = check_jstruct
 check_PROGRAMS = check_jstruct
-check_jstruct_SOURCES = check_jstruct.c check_export.c check_import.c \
-    data/basic.h data/basic.init.h
+check_jstruct_SOURCES = data/basic.init.c check_jstruct.c check_export.c check_import.c \
+    data/basic.h
 check_jstruct_CFLAGS = @CHECK_CFLAGS@
 check_jstruct_LDADD = $(top_builddir)/jstruct/libjstruct.la @CHECK_LIBS@

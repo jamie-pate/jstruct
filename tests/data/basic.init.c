@@ -1,6 +1,4 @@
 // Generated automatically by libjstruct. Do Not Modify.
-// This file must be included directly in a single c file.
-
 #include "basic.h"
 #include <jstruct/jstruct.h>
 #include <json-c/json_object.h>

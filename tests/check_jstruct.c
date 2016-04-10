@@ -4,13 +4,12 @@
 #include <check.h>
 #include JSON_OBJECT_H
 #include "../jstruct/jstruct.h"
+#include "data/basic.h"
 
 // for ARRAYSIZE, assert.h
 #include <jstruct/jstruct_private.h>
 #include "check_export.h"
 #include "check_import.h"
-// Only include once or there will be linker errors
-#include "data/basic.init.h"
 
 Suite * jstruct_suite(void) {
 	Suite *s = suite_create("jstruct");

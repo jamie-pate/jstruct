@@ -14,7 +14,7 @@ class TestParseJStruct(unittest2.TestCase):
     def setUp(self):
         with open(td('data/basic.h'), 'r') as infile:
             self.basic_h = infile.read()
-        with open(td('data/basic.init.h'), 'r') as infile:
+        with open(td('data/basic.init.c'), 'r') as infile:
             self.basic_init_h = infile.read()
         with open(td('data/basic.jstruct.h'), 'r') as infile:
             self.basic_jstruct_h = infile.read()
