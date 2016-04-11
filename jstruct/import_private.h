@@ -31,7 +31,8 @@ typedef struct jstruct_result(*jstruct_import_importer)
 #define debug_importer(primitive_type, json_type)
 #endif
 
-#define json_primitive_importer(primitive_type, name) json_importer_decl(name) { \
+#define json_primitive_importer(primitive_type, name) \
+json_importer_decl(name) { \
     if (property->type.extra != jstruct_extra_type_none) { \
         return extra_importers[property->type.extra](prop, data, ptr, property); \
     } \
@@ -41,12 +42,17 @@ typedef struct jstruct_result(*jstruct_import_importer)
     return JSTRUCT_OK; \
 }
 
-#define json_extra_importer(primitive_type, name) json_importer_decl(primitive_type) { \
+#define json_extra_importer_camel(camel_type, primitive_type, name) \
+json_importer_decl(camel_type) { \
     primitive_type *value = (primitive_type *)ptr; \
     *value = (primitive_type)json_object_get_ ## name(prop); \
     debug_importer(primitive_type, name) \
     return JSTRUCT_OK; \
 }
+
+
+#define json_extra_importer(primitive_type, name) \
+    json_extra_importer_camel(primitive_type, primitive_type, name)
 
 struct jt_importer {
     json_type type;

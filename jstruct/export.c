@@ -19,6 +19,9 @@ json_ctor_decl(int32_t);
 json_ctor_decl(uint32_t);
 json_ctor_decl(int64_t);
 json_ctor_decl(uint64_t);
+json_ctor_decl(unsigned_int);
+json_ctor_decl(long_long);
+json_ctor_decl(unsigned_long_long);
 json_ctor_decl(float);
 
 struct jt_ctor constructor_list[] = {
@@ -41,6 +44,9 @@ struct jt_extra_ctor extra_constructor_list[] = {
     { jstruct_extra_type_uint32_t, json_ctor_name(uint32_t) },
     { jstruct_extra_type_int64_t, json_ctor_name(int64_t) },
     { jstruct_extra_type_uint64_t, json_ctor_name(uint64_t) },
+    { jstruct_extra_type_unsigned_int, json_ctor_name(unsigned_int) },
+    { jstruct_extra_type_long_long, json_ctor_name(long_long) },
+    { jstruct_extra_type_unsigned_long_long, json_ctor_name(unsigned_long_long) },
     { jstruct_extra_type_float, json_ctor_name(float) },
 };
 
@@ -130,6 +136,9 @@ json_extra_ctor(int32_t, int)
 json_extra_ctor(uint32_t, int64)
 json_extra_ctor(int64_t, int64)
 json_extra_ctor(uint64_t, int64)
+json_extra_ctor_camel(unsigned_int, unsigned int, int64)
+json_extra_ctor_camel(long_long, long long, int64)
+json_extra_ctor_camel(unsigned_long_long, unsigned long long, int64)
 json_extra_ctor(float, double)
 
 struct json_object *_jstruct_export(const void *data,
@@ -143,6 +152,7 @@ struct json_object *_jstruct_export(const void *data,
     if (obj) {
         for (property = properties; property->name; ++property) {
             void *ptr = jstruct_prop_ptr(data, property, 0);
+            assert(constructors[json_type_index(property->type.json)]);
             obj_prop = constructors[json_type_index(property->type.json)](data, ptr, property);
             assert(obj_prop || property->nullable);
             if (!obj_prop && !property->nullable) {

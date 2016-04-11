@@ -23,6 +23,9 @@ typedef enum jstruct_extra_type {
     jstruct_extra_type_int64_t,
     jstruct_extra_type_uint64_t,
     jstruct_extra_type_float,
+    jstruct_extra_type_long_long,
+    jstruct_extra_type_unsigned_long_long,
+    jstruct_extra_type_unsigned_int,
     // When expanding this list also add to:
     // export.c:extra_constructor_list
     // import.c:extra_importer_list

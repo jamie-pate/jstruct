@@ -15,6 +15,7 @@ struct my_json_data
   bool active;
   double ratio;
   char *name;
+  unsigned long long ull;
   char **tags;
   int tags__length__;
   bool ratio__null__;

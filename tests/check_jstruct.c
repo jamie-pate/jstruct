@@ -46,6 +46,7 @@ struct my_json_data make_data() {
         .ratio=3.5,
         .active=true,
         .name="main_data",
+        .ull=BIG_INT64,
         .tags=data_tags,
         .tags__length__=3,
     };
@@ -115,6 +116,9 @@ void test_data(struct my_json_data data, struct json_object *obj) {
 
     ck_assert(json_object_object_get_ex(obj, "other_name", &prop) == true);
     ck_assert_str_eq(json_object_get_string(prop), data.name);
+
+    ck_assert(json_object_object_get_ex(obj, "ull", &prop) == true);
+    ck_assert_int_eq(json_object_get_int64(prop), data.ull);
 
     ck_assert(json_object_object_get_ex(obj, "tags", &prop) == true);
     ck_assert_int_eq(json_object_array_length(prop), data.tags__length__);

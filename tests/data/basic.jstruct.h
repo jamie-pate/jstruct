@@ -32,7 +32,7 @@ struct my_json_data {
     double ratio;
     //@name other_name
     char *name;
-
+    unsigned long long ull;
     /* TODO: @dereference annotation in case this isn't an array? */
     char **tags;
 };

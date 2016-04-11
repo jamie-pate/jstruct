@@ -30,6 +30,9 @@ json_importer_decl(int32_t);
 json_importer_decl(uint32_t);
 json_importer_decl(int64_t);
 json_importer_decl(uint64_t);
+json_importer_decl(unsigned_int);
+json_importer_decl(long_long);
+json_importer_decl(unsigned_long_long);
 json_importer_decl(float);
 
 struct jt_importer importer_list[] = {
@@ -52,6 +55,9 @@ struct jt_extra_importer extra_importer_list[] = {
     { jstruct_extra_type_uint32_t, json_importer_name(uint32_t) },
     { jstruct_extra_type_int64_t, json_importer_name(int64_t) },
     { jstruct_extra_type_uint64_t, json_importer_name(uint64_t) },
+    { jstruct_extra_type_unsigned_int, json_importer_name(unsigned_int) },
+    { jstruct_extra_type_long_long, json_importer_name(long_long) },
+    { jstruct_extra_type_unsigned_long_long, json_importer_name(unsigned_long_long) },
     { jstruct_extra_type_float, json_importer_name(float) },
 };
 
@@ -169,6 +175,9 @@ json_extra_importer(int32_t, int)
 json_extra_importer(uint32_t, int64)
 json_extra_importer(int64_t, int64)
 json_extra_importer(uint64_t, int64)
+json_extra_importer_camel(unsigned_int, unsigned int, int64)
+json_extra_importer_camel(long_long, long long, int64)
+json_extra_importer_camel(unsigned_long_long, unsigned long long, int64)
 json_extra_importer(float, double)
 
 struct jstruct_result

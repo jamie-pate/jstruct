@@ -24,12 +24,17 @@ typedef struct json_object *(*jstruct_export_ctor)
 
 #define json_primitive_ctor(primitive_type, name) json_ctor_decl(name) { \
     if (property->type.extra != jstruct_extra_type_none) { \
+        assert(extra_constructors[property->type.extra]); \
         return extra_constructors[property->type.extra](data, ptr, property); \
     } \
     json_ctor_basic_body(primitive_type, name) \
 }
 
 #define json_extra_ctor(primitive_type, name) json_ctor_decl(primitive_type) { \
+    json_ctor_basic_body(primitive_type, name) \
+}
+
+#define json_extra_ctor_camel(camel_type, primitive_type, name) json_ctor_decl(camel_type) { \
     json_ctor_basic_body(primitive_type, name) \
 }
 

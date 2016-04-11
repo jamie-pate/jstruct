@@ -133,6 +133,11 @@ class Annotations():
     JSON_TYPE_NAME = 'json_type_{0}'.format
     LENGTH_PROPERTY_NAME = '{0}__length__'.format
     NULLABLE_PROPERTY_NAME = '{0}__null__'.format
+
+    @staticmethod
+    def JSTRUCT_EXTRA_TYPE_NAME(t):
+        return 'jstruct_extra_type_{0}'.format(t.replace(' ', '_'))
+
     """
     Parse and apply annotations.
     """
@@ -209,7 +214,7 @@ class Annotations():
             'bool': 'boolean',
             'int': 'int',
             'double': 'double',
-            'char*': 'string'
+            'char*': 'string',
         }
         # types found here will have a jstruct_extra_type
         # assigned as well as the json_type
@@ -218,7 +223,13 @@ class Annotations():
             'uint32_t': 'int',
             'int64_t': 'int',
             'uint64_t': 'int',
+            'unsigned int': 'int',
+            'long long': 'int',
+            'unsigned long long': 'int',
         }
+        # should probably just use this instead of raising errors!
+        all_type_map = extra_type_map.copy()
+        all_type_map.update(json_type_map)
 
         idtype, structtype, enumtype, arraydecl, dereference = idtype_or_struct_find(decl)
         is_array = arraydecl is not None
@@ -238,9 +249,11 @@ class Annotations():
                             raise ExpansionError(
                                 type_annotations.get('array', None),
                                 decl,
-                                '\nUnable to map {0} to json type\n'.format(ctype)
+                                ('\nUnable to map [{0}] to json type\n' +
+                                 'Available types are: {1}')
+                                .format(ctype, all_type_map)
                             )
-                        result['extra'] = 'jstruct_extra_type_' + ctypename
+                        result['extra'] = Annotations.JSTRUCT_EXTRA_TYPE_NAME(ctypename)
 
                         if result['extra'] not in self._ast_info['jstruct_extra_type']:
                             raise ExpansionError(
