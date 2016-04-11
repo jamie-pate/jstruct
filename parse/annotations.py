@@ -102,6 +102,7 @@ class ExpansionError(Exception):
         self.annotation = annotation
         self.node = node
         self.message = message
+        self.filename = None
     def __str__(self):
         message = ''
         if self.message:
@@ -114,6 +115,9 @@ class ExpansionError(Exception):
             node_show += show_buf.getvalue()
         else:
             node_show = repr(self.node)
+
+        if self.filename:
+            node_show = node_show.replace('<stdin>', self.filename)
 
         try:
             return 'Unable to process annotation @{0} at line {1}{2}\n{3}\n{4}'.format(
@@ -296,6 +300,7 @@ class Annotations():
                     )
 
         initial_err = None
+        initial_tb = None
         while dereference >= 0:
             try:
                 types = try_get_types(dereference)
@@ -311,8 +316,9 @@ class Annotations():
                     is_array = True
                     if initial_err is None:
                         initial_err = err
+                        initial_tb = sys.exc_info()[2]
 
-        raise initial_err
+        raise Exception, initial_err, initial_tb
 
     def get_property_init_list(self, struct):
         """
@@ -481,7 +487,10 @@ class Annotations():
             if slot == 'declname':
                 obj = None
             return obj
+        import inspect
 
+        # NOTE: __slots__ doesn't exist in ubuntu's version (2.10+dfsg-3)
+        # of pycparser. best to use the github version. (>= 2.11)
         slots = [s for s in type_decl.__class__.__slots__
                  if not s in ('coord', '__weakref__')]
         args = [anonymize(s) for s in slots]
@@ -507,7 +516,7 @@ class Annotations():
 
         def annotate_struct(a, n, ext):
             if not isinstance(n.type, c_ast.Struct):
-                ExpansionError(a, n,
+                raise ExpansionError(a, n,
                     'Cannot expand annotation @{0} on {1}'
                     .format(a['name'], n.__class__.__name__))
 

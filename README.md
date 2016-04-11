@@ -99,7 +99,7 @@ int main() {
 
 ## From git
 
- Required Packages: `autoconf`,`libtool`,`libjson-c-dev`, `python-pycparser`
+ Required Packages: `autoconf`,`libtool`,`libjson-c-dev` v0.10+, `python-pycparser` v2.11+
 
  * install check: http://check.sourceforge.net/web/install.html (needed for autoreconf) or `git clone https://github.com/libcheck/check.git && cd check` and follow the instructions in `README`
  * git clone *repo*

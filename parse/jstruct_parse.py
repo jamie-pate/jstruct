@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from annotations import Annotations
+from annotations import Annotations, ExpansionError
 from jstruct_generator import CGenerator
 from preprocess import preprocess
-from pycparser import c_parser, c_ast
+from pycparser import c_parser, c_ast, plyparser
 import re
 
 
@@ -52,9 +52,16 @@ def parse_jstruct(filename, include_paths=[], defines=[]):
         print(repr(defines))
         raise Exception('C Preprocessor: ' + err)
 
-    ast = parser.parse(pptext, filename=filename)
+    try:
+        ast = parser.parse(pptext, filename=filename)
 
-    return (ast, text)
+        return (ast, text)
+
+    except plyparser.ParseError as ex:
+        import os
+        rel_filename = os.path.relpath(filename)
+        message = ex.message.replace('<stdin>', rel_filename)
+        raise plyparser.ParseError(message)
 
 
 def prune_ast(ast, filename):
@@ -116,8 +123,12 @@ def parse_and_generate(filename, out_filename=None, init_filename=None, include_
 
     ast, text = parse_jstruct(filename, include_paths=include_paths, defines=defines)
     annotations = Annotations(text)
+    try:
+        annotations.expand(ast, '<stdin>')
+    except ExpansionError as ex:
+        ex.filename = filename
+        raise
 
-    annotations.expand(ast, '<stdin>')
     prune_ast(ast, '<stdin>')
     out_ast, init_ast = split_ast(ast)
 
