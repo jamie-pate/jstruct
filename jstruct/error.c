@@ -1,6 +1,5 @@
 #include "error.h"
 #include "error.init.h"
-#include "result.init.h"
 #include "jstruct_private.h"
 #include <errno.h>
 #include <assert.h>

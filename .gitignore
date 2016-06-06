@@ -1,5 +1,6 @@
-/Makefile
-/Makefile.in
+**/.dirstamp
+**/Makefile.in
+**/Makefile
 /aclocal.m4
 /autom4te.cache
 /build-aux/ar-lib
@@ -18,8 +19,6 @@
 /configure
 **/.deps
 **/.libs
-/jstruct/Makefile
-/jstruct/Makefile.in
 /libtool
 /m4
 /stamp-h1
@@ -38,3 +37,7 @@ tests/*.log
 tests/check_jstruct.trs
 .git
 libjstruct-la-*.tar.gz
+
+jstruct/result.init.c
+tests/data/basic.init.c
+tests/data/basic.h
