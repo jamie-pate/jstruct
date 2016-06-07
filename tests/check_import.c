@@ -101,6 +101,36 @@ START_TEST(import_struct_data_inner_error) {
     ERROR_TEST_FREE
 } END_TEST
 
+START_TEST(import_struct_foreign) {
+    struct my_json_data data = make_data();
+    struct my_json_foreign_struct fimported = {0};
+    struct json_object *obj = make_json_obj();
+    fprintf(stdout, "JSON INPUT (basic): %s\n", json_object_to_json_string(obj));
+    fflush(stdout);
+    struct jstruct_result status = jstruct_import(obj, &fimported, my_json_foreign_struct, NULL);
+    fprintf(stdout, "IMPORT STATUS %d %d\n", status.error, jstruct_error_none);
+    fflush(stdout);
+    ck_assert(status.error == jstruct_error_none);
+    fprintf(stdout, "my_data %llu\n", data.id);
+    fflush(stdout);
+    // fimported and imported are only coincidentally binary compatible.
+    struct my_json_data imported = {
+        .id=fimported.id,
+        ._id=fimported._id,
+        .err=fimported.err,
+        .active=fimported.active,
+        .ratio_double=fimported.ratio_double,
+        .name=fimported.name,
+        .ull=fimported.ull,
+        .tags=fimported.tags,
+        .tags__length__=fimported.tags__length__
+    };
+    test_data(imported, obj);
+    json_object_put(obj);
+    ck_assert(status.allocated != NULL);
+    array_list_free(status.allocated);
+} END_TEST
+
 TCase *import_test_case(void) {
     TCase *tc = tcase_create("import");
 
@@ -108,6 +138,7 @@ TCase *import_test_case(void) {
     tcase_add_test(tc, import_basic_struct_data);
     tcase_add_test(tc, import_struct_data);
     tcase_add_test(tc, import_struct_data_inner_error);
+    tcase_add_test(tc, import_struct_foreign);
 
     return tc;
 }

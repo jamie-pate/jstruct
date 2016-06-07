@@ -52,8 +52,9 @@ class TestParseJStruct(unittest2.TestCase):
         from parse.annotations import Annotations
         annotations = Annotations(self.basic_jstruct_h).annotations
         for a in annotations:
-            del a['line']
-            del a['lineEnd']
+            a.line = None
+            a.line_end = None
+        annotations = [a.dict() for a in annotations]
         self.maxDiff = 100000
         expected = [
             {'content': 'BASIC_H', 'directive': 'ifndef', 'name': '#'},
@@ -62,15 +63,27 @@ class TestParseJStruct(unittest2.TestCase):
             {'content': '<stdbool.h>', 'directive': 'include', 'name': '#'},
             {'content': '<jstruct/error.h>', 'directive': 'include', 'name': '#'},
             {'content': '', 'name': 'json'},
-            {'content': '{\n        "title": "ID",\n        "description": "unique object id",\n        "type": "int"\n    }\n    ', 'name': 'schema'},
+            {'content': '{\n        "title": "Identifier",\n        "description": "unique object id",' +
+                '\n        "type": "int"\n    }', 'name': 'schema'},
             {'content': 'DONT_USE_UINT64_T_FOR_SOME_REASON', 'directive': 'ifndef', 'name': '#'},
             {'content': None, 'directive': 'else', 'name': '#'},
             {'content': None, 'directive': 'endif', 'name': '#'},
             {'content': '', 'name': 'private'},
             {'content': '', 'name': 'nullable'},
+            {'content': 'ratio', 'name': 'name'},
             {'content': 'other_name', 'name': 'name'},
             {'content': '', 'name': 'json'},
             {'content': '', 'name': 'json'},
+            {'content': 'DONT_USE_UINT64_T_FOR_SOME_REASON', 'name': '#', 'directive': 'ifndef'},
+            {'content': None, 'directive': 'else', 'name': '#'},
+            {'content': None, 'directive': 'endif', 'name': '#'},
+            {'content': '{\n    "_id": "@private",\n    ' +
+                    '"ratio_double": {\n        "@nullable": true,\n        ' +
+                    '"@name": "ratio"\n    },\n    "name": {\n        ' +
+                    '"@name": "other_name"\n    }\n}',
+                    'name': 'json'
+            },
+            {'content': '', 'name': 'inline'},
             {'content': '', 'directive': 'endif', 'name': '#'}
         ]
 

@@ -16,6 +16,10 @@ The imported data may contain pointers to the `json_object` Those pointers shoul
  * ~~*M3*~~ Export structs containing other structures and arrays (struct* and struct[])
  * ~~*M4*~~ Import structs containing primitive types and arrays
  * ~~*M5*~~ Import nested structs and arrays of structs (feature complete)
+ * M6 ~~Import foreign (un-annotated) structs in a binary compatible way. ~~
+    * ~~Annotate a whole struct with a single json object literal~~
+    * Guarantee that `json_struct_value = foreign_struct_value` is always valid
+    (generate assertions checking that all property sizes and offsets match)
  * Planned features
    * Automatically free pointers in nested structs which were allocated by jstruct_array_malloc
    * Hybrid export/import. Handle c structs with json_object members automatically
@@ -59,6 +63,38 @@ struct my_json_container {
     /* as are struct arrays atm*/
     struct my_json_data *alloc_array_data;
 }
+
+// After M6
+
+struct foreign_struct {
+#ifndef DONT_USE_UINT64_T_FOR_SOME_REASON
+    uint64_t id;
+#else
+    unsigned long long id;
+#endif
+    int _id;
+    enum jstruct_error err;
+
+    bool active;
+    double ratio_double;
+    char *name;
+    unsigned long long ull;
+    char **tags;  
+};
+/* @json {
+    "_id": "@private",
+    "ratio_double": {
+        "@nullable": true,
+        "@name": "ratio"
+    },
+    "@name": "other_name"
+} */
+struct my_json_foreign_struct {
+    // place all members of a struct 'inline' inside this struct 
+    // @inline
+    struct foreign_struct fs;
+};
+
 ```
 main.c
 ```C
@@ -74,7 +110,7 @@ int main() {
         .main_data={
             .id=1,
             ._id=2,
-            .ratio=3.5,
+            .ratio_double=3.5,
             .name="main_data",
             .tags=data_tags
         },
@@ -92,6 +128,19 @@ int main() {
     if (obj) {
         printf("%s", json_object_to_json_string(obj));
     }
+
+
+    // After M6
+    struct foreign_struct foreign_data = {
+        .id=1,
+        ._id=2,
+        .ratio_double=3.5,
+        .name="foreign_data",
+        .tags=data_tags
+    };
+    struct my_json_foreign_struct jforeign_data = foreign_data;
+
+    struct json_object *fobj = jstruct_export(&jforeign_data, my_json_foreign_struct);
 }
 ```
 

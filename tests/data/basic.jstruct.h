@@ -9,7 +9,7 @@
 struct my_json_data {
     /*
     @schema {
-        "title": "ID",
+        "title": "Identifier",
         "description": "unique object id",
         "type": "int"
     }
@@ -29,7 +29,8 @@ struct my_json_data {
 
     /* add the ability to null this field even though it's not a pointer */
     //@nullable
-    double ratio;
+    //@name ratio
+    double ratio_double;
     //@name other_name
     char *name;
     unsigned long long ull;
@@ -51,6 +52,37 @@ struct my_json_container {
 
     /* TODO: @array shouldn't be automatic here or add @single or @deferefence annotation? */
     struct my_json_data *alloc_array_data;
+};
+
+struct foreign_struct {
+#ifndef DONT_USE_UINT64_T_FOR_SOME_REASON
+    uint64_t id;
+#else
+    unsigned long long id;
+#endif
+    int _id;
+    enum jstruct_error err;
+
+    bool active;
+    double ratio_double;
+    char *name;
+    unsigned long long ull;
+    char **tags;  
+};
+/* @json {
+    "_id": "@private",
+    "ratio_double": {
+        "@nullable": true,
+        "@name": "ratio"
+    },
+    "name": {
+        "@name": "other_name"
+    }
+} */
+struct my_json_foreign_struct {
+    // import all the members of foreign_struct so that this struct definition matches it.
+    // @inline
+    struct foreign_struct fs;
 };
 
 #endif // BASIC_H

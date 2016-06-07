@@ -2,9 +2,10 @@ import sys
 import StringIO
 import re
 import json
+from inspect import currentframe, getframeinfo
+from itertools import chain
 from pycparser import c_ast
 from pycparser.plyparser import Coord
-from inspect import currentframe, getframeinfo
 
 
 def str_literal(str):
@@ -121,8 +122,8 @@ class ExpansionError(Exception):
 
         try:
             return 'Unable to process annotation @{0} at line {1}{2}\n{3}\n{4}'.format(
-                self.annotation['name'] if self.annotation else None,
-                self.annotation['line'] if self.annotation else None,
+                self.annotation.name if self.annotation else None,
+                self.annotation.line if self.annotation else None,
                 message,
                 'Annotation: ' + repr(self.annotation),
                 'Node: ' + node_show
@@ -130,13 +131,317 @@ class ExpansionError(Exception):
         except Exception as ex:
             return str(ex)
 
+
+class Annotation():
+    def __init__(self, name, content, line=None, linecount=None, directive=None, root=None):
+        self.name = name
+        self.content = content
+        self.line = line if line is not None else root.line
+        self.line_end = self.line + linecount if linecount is not None else root.line_end
+
+        if directive is None and root is not None:
+            self.directive = root.directive
+        else:
+            self.directive = directive
+
+    def __str__(self):
+        return repr(self.dict())
+
+    def __repr__(self):
+        return str(self)
+
+    def dict(self): 
+        result = {
+            'name': self.name,
+            'content': self.content
+        }
+        if self.line is not None:
+            result['line'] = self.line
+        if self.line_end is not None:
+            result['line_end'] = self.line_end
+        if self.directive is not None:
+            result['directive'] = self.directive
+        return result
+
+
+class AnnotatedProperty():
+    """
+    Contains:
+    init_list: list of `NamedInitializer`s for a struct which describes this property.
+    decl: decl associated with this property.
+    extra_decls: dictionary of 'property': 'c_type' decls to append to support this property
+    nullable: True if nullable
+    """
+
+    LENGTH_NAME = '{0}__length__'.format
+    NULLABLE_NAME = '{0}__null__'.format
+    def __init__(self, annotated_struct, decl):
+        self.init_list = None
+        self.decl = decl
+        self.extra_decls = {}
+        self.values = {}
+        init_exprs = []
+
+        self.struct = annotated_struct
+
+        annotations = self.struct.annotations.get(decl, self.struct.json_annotations)
+        try:
+            for a in annotations:
+                expr = self.expand_annotation(a, self.values)
+                if expr is not None:
+                    init_exprs.append(expr)
+        except StopIteration:
+            name = a.name
+            a = next(annotations, None)
+            if a is not None:
+                raise ExpansionError(a, decl, 'Unexpected annotation after ' + name)
+            return
+        init_list = []
+
+        prop_name = type_find(decl, c_ast.TypeDecl).declname
+
+        # name the property if it hasn't already been named
+        if 'name' not in self.values:
+            self.values['name'] = prop_name
+
+        # add string initializers
+        for init_name in ('name', 'schema'):
+            if init_name in self.values:
+                literal = str_literal(self.values[init_name])
+                init_exprs.append(
+                    c_ast.NamedInitializer(
+                        [c_ast.ID(init_name)],
+                        c_ast.Constant('string', literal)
+                    )
+                )
+
+        # assign types
+        type_annotations = {
+            name: t for name,t in self.values.iteritems()
+            if isinstance(t, Annotation)
+        }
+        types, arraydecl = self.struct.annotations.get_types(decl, type_annotations)
+        type_inits = [c_ast.NamedInitializer(
+            [c_ast.ID(ttype)],
+            c_ast.ID(t)
+        ) for ttype, t in types.iteritems()]
+        fi = getframeinfo(currentframe())
+        init_exprs.append(c_ast.NamedInitializer(
+            [c_ast.ID('type')],
+            c_ast.InitList(type_inits, Coord(fi.filename, fi.lineno))
+        ))
+        struct = annotated_struct.struct
+        # calculate struct offset
+        init_exprs.append(c_ast.NamedInitializer(
+            [c_ast.ID('offset')],
+            self.offsetof(struct.name, prop_name)
+        ))
+        if 'nullable' in self.values and self.values['nullable']:
+            self.extra_decls[AnnotatedProperty.NULLABLE_NAME(decl.name)] = 'bool'
+            init_exprs.append(c_ast.NamedInitializer(
+                [c_ast.ID('null_offset')],
+                self.offsetof(struct.name, AnnotatedProperty.NULLABLE_NAME(prop_name))
+            ))
+        if arraydecl:
+            # static array
+            init_exprs.append(c_ast.NamedInitializer(
+                [c_ast.ID('length')],
+                arraydecl.dim
+            ))
+        elif types['json'] == 'json_type_array':
+            # calculate length offset
+            len_prop = AnnotatedProperty.LENGTH_NAME(prop_name)
+            self.extra_decls[len_prop] = 'int'
+            init_exprs.append(c_ast.NamedInitializer(
+                [c_ast.ID('length_offset')],
+                self.offsetof(struct.name, len_prop)
+            ))
+            init_exprs.append(c_ast.NamedInitializer(
+                [c_ast.ID('dereference')],
+                c_ast.Constant('int', '1')
+            ))
+
+        if types['json'] == 'json_type_array':
+            # assume PtrDecl for now
+            init_exprs.append(c_ast.NamedInitializer(
+                [c_ast.ID('stride')],
+                self.sizeof(decl.type.type)
+            ))
+
+
+        fi = getframeinfo(currentframe())
+        self.init_list = c_ast.InitList(init_exprs, Coord(fi.filename, fi.lineno))
+
+
+    def offsetof(self, struct_name, name):
+        return c_ast.FuncCall(c_ast.ID('offsetof'), c_ast.ExprList([
+            c_ast.Typename(None, [],
+                c_ast.TypeDecl(None, [],
+                    c_ast.Struct(struct_name, None))
+            ),
+            c_ast.ID(name)
+        ]))
+
+    def anonymize_type_decl(self, type_decl):
+        types = (c_ast.PtrDecl, c_ast.TypeDecl)
+        def anonymize(slot):
+            obj = getattr(type_decl, slot)
+            if obj.__class__ in types:
+                obj = self.anonymize_type_decl(obj)
+            if slot == 'declname':
+                obj = None
+            return obj
+        import inspect
+
+        # NOTE: __slots__ doesn't exist in ubuntu's version (2.10+dfsg-3)
+        # of pycparser. best to use the github version. (>= 2.11)
+        slots = [s for s in type_decl.__class__.__slots__
+                 if not s in ('coord', '__weakref__')]
+        args = [anonymize(s) for s in slots]
+        return type_decl.__class__(*args)
+
+    def sizeof(self, type_decl):
+        anonymous_type_decl = self.anonymize_type_decl(type_decl)
+        return c_ast.UnaryOp('sizeof', c_ast.Typename(None, [], anonymous_type_decl))
+
+    def expand_annotation(self, a, values):
+        """ 
+        Expand an annotation by adding a key/value to values and/or returning
+        an Expr or None.
+        Adding the annotation to values will cause it to be a 'type annotation'
+        which overrides the type initializer for the json_type_x and/or
+        jstruct_extra_type_x
+        Raises StopIteration if there can be no more valid annotations, and the
+        AnnotatedProperty should be skipped from the json property list.
+        """
+        name = a.name
+        if name == '#':
+            return None
+        # skip private properties
+        if name in ('private', 'inline'):
+            values[name] = a
+            raise StopIteration()
+
+        # append the contents of these annotations directly later.
+        if name in ['schema', 'name']:
+            values[name] = a.content
+            if a.content == None:
+                raise ExpansionError(a, decl, 'Content is None')
+            return None
+            
+        if name == 'nullable':
+            init_name = c_ast.ID(name)
+            expr = c_ast.Constant('int', '1')
+            values['nullable'] = True
+            return c_ast.NamedInitializer([init_name], expr)
+
+        if name in ['array']:
+            values[name] = a
+            return None
+
+        raise ExpansionError(a, decl, 'Unexpected annotation')
+
+
+
+class AnnotatedStruct():
+    """
+    Describes the property list for a struct.
+    annotations: Annotations object
+    annotated_properties: list of annotated properties
+    init_list: initlist to generate metadata
+    decls: a list of all `Decl` objects to use in the new struct definition.
+    struct: the Struct that's being annotated
+    """
+    def __init__(self, annotations, struct, json_annotations, ext):
+        """
+        Describes the property list for a struct
+        Also create a list of c_ast.Decl to append to the struct decls
+        """
+        self.json_annotations = json_annotations
+        self.annotated_properties = None
+        self.annotations = annotations
+        self.ext = ext
+        self.init_list = None
+        self.decls = None
+        self.struct = struct
+        self.extra_decls = None
+        def make_extra_decl(name, t):
+            idtype = c_ast.IdentifierType([t])
+            td = c_ast.TypeDecl(name, [], idtype)
+            return c_ast.Decl(
+                name,
+                [], # quals
+                [], # storage
+                [], # funcspec
+                td, # type
+                None, # init
+                None, # bitsize
+            )
+
+        
+
+        fi = getframeinfo(currentframe())
+        annotated_properties = [AnnotatedProperty(self, d) for d in struct.decls]
+
+        out_ap = []
+        for ap in annotated_properties:
+            inline_annotation = ap.values.get('inline', False)
+            if inline_annotation:
+                astruct = self.inline_struct_annotated(inline_annotation, ap.decl)
+                out_ap += astruct.annotated_properties
+            else:
+                out_ap.append(ap)
+        
+        self.annotated_properties = out_ap
+
+        init_lists = [
+            ap.init_list for ap in out_ap
+            # 'private' and 'inline' have no init_list
+            if ap.init_list is not None
+        ]
+
+        # NULL terminator
+        init_lists.append(c_ast.InitList([c_ast.Constant('int', '0')]))
+
+        self.init_list = c_ast.InitList(
+            init_lists,
+            Coord(fi.filename, fi.lineno)
+        )
+
+        decls = [ap.decl for ap in out_ap]
+
+        extra_decls = chain.from_iterable((
+            ap.extra_decls.iteritems()
+            for ap in out_ap
+        ))
+        extra_decls = [make_extra_decl(name, t) for name, t in extra_decls]
+
+        decls += extra_decls
+
+        self.decls = decls
+
+    def inline_struct_annotated(self, a, decl):
+        """
+        Import all the decls from decl's type, replacing decl in the current AnnotatedStruct
+        """
+        name = decl.type.type.name
+        try:
+            struct = next((
+                e.type for e in self.ext
+                if hasattr(e, 'type') and hasattr(e.type, 'name') and e.type.name == name
+            ))
+        except Exception as ex:
+            raise ExpansionError(a, decl, ex.message)
+
+        struct = c_ast.Struct(self.struct.name, struct.decls, struct.coord)
+        return AnnotatedStruct(self.annotations, struct, self.json_annotations, self.ext)
+
+
 class Annotations():
 
     # TODO: make these configurable?
     PROPERTIES_NAME = '{0}__jstruct_properties__'.format
     JSON_TYPE_NAME = 'json_type_{0}'.format
-    LENGTH_PROPERTY_NAME = '{0}__length__'.format
-    NULLABLE_PROPERTY_NAME = '{0}__null__'.format
 
     @staticmethod
     def JSTRUCT_EXTRA_TYPE_NAME(t):
@@ -154,24 +459,38 @@ class Annotations():
             self.len = None
         self._ast_info = None
 
-    def get(self, line):
+    def get(self, decl, json_annotations=None):
         """
         Return a generator of all
         annotations for the specified line.
         line must be larger than any previous call,
         except after calling parse() or reset()
         """
+        if json_annotations:
+            root_annotation = json_annotations['@root']
+
+            if decl.name in json_annotations:
+                annotation = json_annotations[decl.name]
+                if isinstance(annotation, dict):
+                    for name, a in annotation.iteritems():
+                        if name.startswith('@'):
+                            yield Annotation(name[1:], a, root=root_annotation)
+                elif annotation.startswith('@'):
+                    yield Annotation(annotation[1:], '', root=root_annotation)
+
+        line = decl.coord.line
         a = True
         while a:
             a = self.get_next(line)
             if a:
                 yield a
 
+
     def get_next(self, line):
         if self.idx >= self.len:
             return None
 
-        if self.annotations[self.idx]['line'] <= line:
+        if self.annotations[self.idx].line <= line:
             a = self.annotations[self.idx]
             self.idx = self.idx + 1
             return a
@@ -320,186 +639,6 @@ class Annotations():
 
         raise Exception, initial_err, initial_tb
 
-    def get_property_init_list(self, struct):
-        """
-        Create an InitList describing the property list for a struct
-        Also create a list of c_ast.Decl to append to the struct decls
-        """
-
-        def make_extra_decl(name, t):
-            idtype = c_ast.IdentifierType([t])
-            td = c_ast.TypeDecl(name, [], idtype)
-            return c_ast.Decl(
-                name,
-                [], # quals
-                [], # storage
-                [], # funcspec
-                td, # type
-                None, # init
-                None, # bitsize
-            )
-
-        def make_prop_init_list(decl, extra_decls):
-            """
-            Create an InitList to instantiate a struct which describes a single property
-            decl is the current property c_ast.Decl
-            """
-            taken = []
-            exprs = []
-            json_name = None
-            nullable = False
-            type_annotations = {}
-
-            annotations = self.get(decl.coord.line)
-            for a in annotations:
-                name = a['name']
-                if name == '#':
-                    continue
-                taken.append(name)
-                # skip private properties
-                if name == 'private':
-                    a = next(annotations, None)
-                    if a is not None:
-                        raise ExpansionError(a, decl, 'Unexpected annotation after ' + name)
-                    return
-
-                init_name, expr = (None, None)
-                # append the contents of these annotations directly
-                if name in ['schema', 'name']:
-                    init_name = c_ast.ID(name)
-                    if name == 'name':
-                        json_name = a['content']
-                    if a['content'] == None:
-                        raise ExpansionError(a, decl, 'Content is None')
-                    expr = c_ast.Constant('string', str_literal(a['content']))
-                    
-
-
-                if name in ['nullable']:
-                    init_name = c_ast.ID(name)
-                    expr = c_ast.Constant('int', '1')
-                    extra_decls[Annotations.NULLABLE_PROPERTY_NAME(decl.name)] = 'bool'
-                    nullable = True
-
-                if name in ['array']:
-                    type_annotations[name] = a
-                    continue
-
-                if init_name is None or expr is None:
-                    raise ExpansionError(a, decl, 'Unexpected annotation')
-
-                exprs.append(c_ast.NamedInitializer([init_name], expr))
-
-            prop_name = type_find(decl, c_ast.TypeDecl).declname
-
-            # name the property if it hasn't already been named
-            if json_name is None:
-                json_name = prop_name
-                exprs.append(
-                    c_ast.NamedInitializer(
-                        [c_ast.ID('name')],
-                        c_ast.Constant('string', str_literal(json_name))
-                    )
-                )
-
-            # assign types
-            types, arraydecl = self.get_types(decl, type_annotations)
-            type_inits = [c_ast.NamedInitializer(
-                [c_ast.ID(ttype)],
-                c_ast.ID(t)
-            ) for ttype, t in types.iteritems()]
-            fi = getframeinfo(currentframe())
-            exprs.append(c_ast.NamedInitializer(
-                [c_ast.ID('type')],
-                c_ast.InitList(type_inits, Coord(fi.filename, fi.lineno))
-            ))
-            # calculate struct offset
-            exprs.append(c_ast.NamedInitializer(
-                [c_ast.ID('offset')],
-                self.offsetof(struct.name, prop_name)
-            ))
-            if nullable:
-                exprs.append(c_ast.NamedInitializer(
-                    [c_ast.ID('null_offset')],
-                    self.offsetof(struct.name, Annotations.NULLABLE_PROPERTY_NAME(prop_name))
-                ))
-            if arraydecl:
-                # static array
-                exprs.append(c_ast.NamedInitializer(
-                    [c_ast.ID('length')],
-                    arraydecl.dim
-                ))
-            elif types['json'] == 'json_type_array':
-                # calculate length offset
-                len_prop = Annotations.LENGTH_PROPERTY_NAME(prop_name)
-                extra_decls[len_prop] = 'int'
-                exprs.append(c_ast.NamedInitializer(
-                    [c_ast.ID('length_offset')],
-                    self.offsetof(struct.name, len_prop)
-                ))
-                exprs.append(c_ast.NamedInitializer(
-                    [c_ast.ID('dereference')],
-                    c_ast.Constant('int', '1')
-                ))
-
-            if types['json'] == 'json_type_array':
-                # assume PtrDecl for now
-                exprs.append(c_ast.NamedInitializer(
-                    [c_ast.ID('stride')],
-                    self.sizeof(decl.type.type)
-                ))
-
-
-            fi = getframeinfo(currentframe())
-            return c_ast.InitList(exprs, Coord(fi.filename, fi.lineno))
-
-        fi = getframeinfo(currentframe())
-        extra_decls = {}
-        exprs = (make_prop_init_list(p, extra_decls) for p in struct.decls)
-        exprs = [e for e in exprs if e is not None]
-        # NULL terminator
-        exprs.append(c_ast.InitList([c_ast.Constant('int', '0')]))
-
-        initlist = c_ast.InitList(
-            exprs,
-            Coord(fi.filename, fi.lineno)
-        )
-
-        extra_decls = [make_extra_decl(name, t) for name, t in extra_decls.iteritems()]
-
-        return (initlist, extra_decls)
-
-    def offsetof(self, struct_name, name):
-        return c_ast.FuncCall(c_ast.ID('offsetof'), c_ast.ExprList([
-            c_ast.Typename(None, [],
-                c_ast.TypeDecl(None, [],
-                    c_ast.Struct(struct_name, None))
-            ),
-            c_ast.ID(name)
-        ]))
-
-    def anonymize_type_decl(self, type_decl):
-        types = (c_ast.PtrDecl, c_ast.TypeDecl)
-        def anonymize(slot):
-            obj = getattr(type_decl, slot)
-            if obj.__class__ in types:
-                obj = self.anonymize_type_decl(obj)
-            if slot == 'declname':
-                obj = None
-            return obj
-        import inspect
-
-        # NOTE: __slots__ doesn't exist in ubuntu's version (2.10+dfsg-3)
-        # of pycparser. best to use the github version. (>= 2.11)
-        slots = [s for s in type_decl.__class__.__slots__
-                 if not s in ('coord', '__weakref__')]
-        args = [anonymize(s) for s in slots]
-        return type_decl.__class__(*args)
-
-    def sizeof(self, type_decl):
-        anonymous_type_decl = self.anonymize_type_decl(type_decl)
-        return c_ast.UnaryOp('sizeof', c_ast.Typename(None, [], anonymous_type_decl))
-
     def expand(self, ast, filename):
         """
         Expand a pycparser ast with extra structures/data etc
@@ -511,18 +650,28 @@ class Annotations():
         struct_object_property_decl = c_ast.Struct('jstruct_object_property', None)
 
         def ppdirective(a, n, ext):
-            ext.insert(c_ast.ID('#{0} {1}'.format(a['directive'], a['content'])))
+            id = ' '.join((a.directive, a.content)) if a.content else a.directive
+            ext.insert(c_ast.ID('#{0}'.format(id)))
             return False
 
         def annotate_struct(a, n, ext):
+
             if not isinstance(n.type, c_ast.Struct):
                 raise ExpansionError(a, n,
                     'Cannot expand annotation @{0} on {1}'
-                    .format(a['name'], n.__class__.__name__))
+                    .format(a.name, n.__class__.__name__))
 
+            json_annotations = {}
+            if a.name == 'json' and a.content != '':
+                json_annotations = json.loads(a.content)
+                json_annotations['@root'] = a
+                if not isinstance(json_annotations, dict):
+                    raise ExpansionError(a, n,
+                        'Expected @json content to be empty or a JSON object.\nGot {0}'
+                        .format(a.content)) 
             name = n.type.name
             struct = n.type
-            prop_init_list, struct_extra_decls = self.get_property_init_list(struct)
+            annotated_struct = AnnotatedStruct(self, struct, json_annotations, ext)
             properties = c_ast.Decl(
                 self.PROPERTIES_NAME(name),
                 [], #quals
@@ -538,10 +687,11 @@ class Annotations():
                     None, # dim
                     [] # dim_quals
                 ),
-                prop_init_list, # init
+                annotated_struct.init_list, # init
                 None # bitsize
             )
-            struct.decls.extend(struct_extra_decls)
+
+            struct.decls = annotated_struct.decls
             if not ext.seek(n):
                 raise ExpansionError(a, n, "Couldn't seek to node")
             ext.insert(properties)
@@ -557,13 +707,13 @@ class Annotations():
             if n.coord.file != filename:
                 continue
 
-            annotations = self.get(n.coord.line)
+            annotations = self.get(n)
             for a in annotations:
-                if not done and a['name'] in process:
-                    done = process[a['name']](a, n, ext)
+                if not done and a.name in process:
+                    done = process[a.name](a, n, ext)
                     if done:
                         try:
-                            a_name = a['name']
+                            a_name = a.name
                             a = next(annotations)
                             raise ExpansionError(
                                 a, n, 'Unexpected annotation after ' + a_name)
@@ -628,14 +778,9 @@ class Annotations():
                     content = match.group('ppcontent')
                 else:
                     content = match.group('olcontent') if olname else match.group('mlcontent')
-                annotation = {
-                    'line': line,
-                    'lineEnd': line + linecount,
-                    'name': name,
-                    'content': content,
-                }
-                if ppname is not None:
-                    annotation['directive'] = ppname
+                if content:
+                    content = content.strip()
+                annotation = Annotation(name, content, line, linecount, ppname)
                 annotations.append(annotation)
             else:
                 break

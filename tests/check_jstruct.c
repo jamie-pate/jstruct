@@ -43,7 +43,7 @@ struct my_json_data make_data() {
     struct my_json_data data = {
         .id=BIG_INT64,
         ._id=++id,
-        .ratio=3.5,
+        .ratio_double=3.5,
         .active=true,
         .name="main_data",
         .ull=BIG_INT64,
@@ -109,7 +109,7 @@ void test_data(struct my_json_data data, struct json_object *obj) {
     ck_assert(json_object_object_get_ex(obj, "_id", &prop) == false);
 
     ck_assert(json_object_object_get_ex(obj, "ratio", &prop) == true);
-    ck_assert(json_object_get_double(prop) == data.ratio);
+    ck_assert(json_object_get_double(prop) == data.ratio_double);
 
     ck_assert(json_object_object_get_ex(obj, "active", &prop) == true);
     ck_assert(json_object_get_boolean(prop) == true);

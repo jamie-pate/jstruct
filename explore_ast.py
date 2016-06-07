@@ -60,18 +60,22 @@ text = r"""
 # a ParseError if there's an error in the code
 #
 import os
+from subprocess import *
 from pycparser import parse_file
 parser = c_parser.CParser()
 cpp_args = [
     '--sysroot=/dev/null',
     '-nostdinc',
-    '-I/home/jamie/src/pycparser/utils/fake_libc_include',
+    '-I{0}/util/fake_libc_include/'.format(os.getcwd()),
     '-I{0}/lib'.format(os.getcwd()),
     '-I{0}/tests/data'.format(os.getcwd()),
+    '-I./',
     '-I/usr/include',
     '-D __attribute__(x)=',
+    '-D JSON_OBJECT_H=<json-c/json_object.h>',
+    '-D ARRAYLIST_H=<json-c/arraylist.h>'
 ]
-filename = 'tests/data/basic.h'
+filename = 'tests/data/basic.jstruct.h'
 pipe = Popen(   ['cpp'] + cpp_args + [filename],
                 stdout=PIPE,
                 universal_newlines=True)
